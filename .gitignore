@@ -42,5 +42,5 @@ build/
 dependency-reduced-pom.xml
 
 ### executable-created files ###
-/input
-/output
+/input/
+/output/
