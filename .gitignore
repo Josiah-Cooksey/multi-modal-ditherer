@@ -40,3 +40,7 @@ build/
 
 ### Maven Shade plugin generated files ###
 dependency-reduced-pom.xml
+
+### executable-created files ###
+/input
+/output
