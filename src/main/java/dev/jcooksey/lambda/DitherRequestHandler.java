@@ -1,13 +1,13 @@
 package dev.jcooksey.lambda;
 
-import com.amazonaws.services.lambda.runtime.Context;
-import com.amazonaws.services.lambda.runtime.LambdaLogger;
-import com.amazonaws.services.lambda.runtime.RequestHandler;
+import com.amazonaws.services.lambda.runtime.*;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+
+import org.eclipse.jetty.http.MultiPart.Parser;
+import org.eclipse.jetty.http.MultiPart.Part;
 
 public class DitherRequestHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent>
 {
@@ -25,20 +25,31 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
         headers.put("Content-Type", "application/json");
         response.setHeaders(headers);
 
-        if (event.getIsBase64Encoded())
+
+        if (!event.getIsBase64Encoded())
         {
-            // for now, I'll just return the input image
-            response.setBody(event.getBody());
-            response.setStatusCode(200);
+            response.setBody("{\"error\": \"Input image/form was not Base64 encoded.\"}");
+            response.setStatusCode(400);
+            return response;
+        }
+        if (!event.getHeaders().containsKey("content-type") || !event.getHeaders().get("content-type").equalsIgnoreCase("multipart/form-data"))
+        {
+            response.setBody("{\"error\": \"POSTs must be multipart/form-data.\"}");
+            response.setStatusCode(400);
             return response;
         }
 
-        response.setBody("{\"error\": \"Input image was not Base64 encoded.\"}");
-        response.setStatusCode(400);
+        byte[] formData = Base64.getDecoder().decode(event.getBody());
+
+        // for now, I'll just return the input image
+        response.setBody(event.getBody());
+        response.setStatusCode(200);
         return response;
 
-        // TODO: use Apache Commons FileUpload library to parse the body of the request (multipart/form-data)
-        // it needs to be converted from Base64 into binary, then parsed into the constituent form fields
+
+
+        // TODO: use Apache Commons FileUpload library or jetty to parse the body of the request (multipart/form-data)
+        // ✓ it needs to be converted from Base64 into binary, then parsed into the constituent form fields
         // afterwards, we need to validate that the expected data was uploaded
         // if it's valid, we can perform the dithering
         // finally, for this lambda module specifically, we need to package the data to return it
