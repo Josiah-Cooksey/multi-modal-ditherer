@@ -4,12 +4,19 @@ import com.amazonaws.services.lambda.runtime.*;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.*;
 
 import org.eclipse.jetty.http.MultiPart;
 import org.eclipse.jetty.http.MultiPart.Parser;
 import org.eclipse.jetty.http.MultiPart.Parser.Listener;
 import org.eclipse.jetty.io.Content;
+
+import javax.imageio.ImageIO;
+import java.io.ByteArrayOutputStream;
 
 public class DitherRequestHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent>
 {
@@ -23,7 +30,7 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
 
         APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();
         Map<String, String> headers = new HashMap<>();
-        headers.put("Content-Type", "application/json");
+        headers.put("content-type", "application/json");
         response.setHeaders(headers);
 
         try
@@ -36,36 +43,12 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
         }
 
         byte[] formData = Base64.getDecoder().decode(event.getBody());
-        FormFileType currentFiletype = FormFileType.NONE;
-        Listener formListener = new Listener()
-        {
-            @Override
-            public void onPartBegin()
-            {
-            }
-
-            @Override
-            public void onPartHeader(String name, String value)
-            {
-            }
-
-            @Override
-            public void onPartHeaders()
-            {
-            }
-
-            @Override
-            public void onPartContent(Content.Chunk chunk)
-            {
-            }
-
-            @Override
-            public void onPartEnd()
-            {
-            }
-        };
+        FormListener formListener = new FormListener();
         MultiPart.Parser formParser = new MultiPart.Parser(headers.get("boundary"), formListener);
 
+        Content.Chunk chunk = Content.Chunk.from(ByteBuffer.wrap(formData), true);
+        formParser.parse(chunk);
+        formParser.reset();
 
         // for now, I'll just return the input image
         response.setBody(event.getBody());
@@ -81,7 +64,8 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
         // if it's valid, we can perform the dithering
         // finally, for this lambda module specifically, we need to package the data to return it
         // I'd like to use json formatting because the website can then handle the response in a more standard way
-        // but the downside is that we need to encode it as base64, which uses more processing time both in this back-end as well as on the front-end
+        // but the downside is that we need to encode it as base64, which uses more processing time encoding in the back-end and decoding on the front-end
+
         // instead, it may be possible to return a image/png response for valid requests but a json response for any issues
         // that way, the front-end doesn't need to perform much extra work other than determining the response type and displaying the appropriate image or error message
     }
