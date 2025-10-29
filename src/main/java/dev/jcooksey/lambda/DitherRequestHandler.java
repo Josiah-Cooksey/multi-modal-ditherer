@@ -8,6 +8,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import org.eclipse.jetty.http.MultiPart;
@@ -27,11 +28,12 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
         logger.log("Headers: " + event.getHeaders());
         logger.log("Body: " + event.getBody());
         logger.log("IsBase64Encoded: " + event.getIsBase64Encoded());
+        logger.log("Boundary: " + event.getHeaders().get("boundary"));
 
         APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();
-        Map<String, String> headers = new HashMap<>();
-        headers.put("content-type", "application/json");
-        response.setHeaders(headers);
+        Map<String, String> responseHeaders = new HashMap<>();
+        responseHeaders.put("content-type", "application/json");
+        response.setHeaders(responseHeaders);
 
         try
         {
@@ -43,12 +45,21 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
         }
 
         byte[] formData = Base64.getDecoder().decode(event.getBody());
-        FormListener formListener = new FormListener();
-        MultiPart.Parser formParser = new MultiPart.Parser(headers.get("boundary"), formListener);
+        logger.log(new String(formData, 0, 200, StandardCharsets.UTF_8));
 
-        Content.Chunk chunk = Content.Chunk.from(ByteBuffer.wrap(formData), true);
-        formParser.parse(chunk);
-        formParser.reset();
+        FormListener formListener = new FormListener();
+        MultiPart.Parser formParser = new MultiPart.Parser(event.getHeaders().get("boundary"), formListener);
+
+        try
+        {
+            Content.Chunk chunk = Content.Chunk.from(ByteBuffer.wrap(formData), false);
+            formParser.parse(chunk);
+            formParser.parse(Content.Chunk.EOF);
+        } catch (Throwable t)
+        {
+            t.printStackTrace();
+        }
+        // formParser.reset();
 
         // for now, I'll just return the input image
         response.setBody(event.getBody());
@@ -57,13 +68,13 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
 
 
 
-        // TODO: use Apache Commons FileUpload library or jetty to parse the body of the request (multipart/form-data)
+        // TODO: use Apache Commons FileUpload library or ✓ jetty to parse the body of the request (multipart/form-data)
         // ✓ it needs to be converted from Base64 into binary
-        // then parsed into the constituent form fields
-        // afterwards, we need to validate that the expected data was uploaded
+        // ✓ then parsed into the constituent form fields
+        // ✓ afterwards, we need to validate that the expected data was uploaded
         // if it's valid, we can perform the dithering
-        // finally, for this lambda module specifically, we need to package the data to return it
-        // I'd like to use json formatting because the website can then handle the response in a more standard way
+        // ✓ finally, for this lambda module specifically, we need to package the data to return it
+        // ✓ I'd like to use json formatting because the website can then handle the response in a more standard way
         // but the downside is that we need to encode it as base64, which uses more processing time encoding in the back-end and decoding on the front-end
 
         // instead, it may be possible to return a image/png response for valid requests but a json response for any issues
