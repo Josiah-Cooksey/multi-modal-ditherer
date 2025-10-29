@@ -15,15 +15,16 @@ public class EventTest
     public static void main(String[] args)
     {
         APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
+        String longString = "";
         try
         {
-            String longString = Files.readString(Path.of("src/test/resources/requestBody.txt"));
+            longString = Files.readString(Path.of("src/test/resources/requestBody.txt"));
         } catch (IOException e)
         {
             e.printStackTrace();
             System.exit(-1);
         }
-        event.setBody("");
+        event.setBody(longString);
         event.setIsBase64Encoded(true);
         event.setHeaders(Map.ofEntries(
                 Map.entry("accept", "text/html,application/xhtml+xml,application/xml"),
