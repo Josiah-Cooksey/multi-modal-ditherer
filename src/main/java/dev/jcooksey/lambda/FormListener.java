@@ -68,9 +68,9 @@ public class FormListener implements MultiPart.Parser.Listener
                     g.setColor(new Color(0, 255, 0, 100));
                     g.fillRect(0, 0, img.getWidth(), img.getHeight());
                     g.dispose();
-
-                    File outputFile = new File(File.separator + "tmp" + File.separator + "output.png");
-                    ImageIO.write(img, "png", outputFile);
+                    File tempDir = new File(System.getProperty("java.io.tmpdir") + File.separator + "output.png");
+                    // File outputFile = new File(File.separator + "tmp" + File.separator + "output.png");
+                    ImageIO.write(img, "png", tempDir);
                 } catch (IOException e)
                 {
                     throw new RuntimeException(e);
