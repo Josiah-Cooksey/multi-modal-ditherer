@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 import dev.jcooksey.lambda.DitherRequestHandler;
 
 public class EventTest
@@ -29,9 +31,9 @@ public class EventTest
         event.setHeaders(Map.ofEntries(
                 Map.entry("accept", "text/html,application/xhtml+xml,application/xml"),
                 Map.entry("application", "text/html"),
-                Map.entry("content-length", "70829"),
+                Map.entry("content-length", "71946"),
                 Map.entry("content-type", "multipart/form-data"),
-                Map.entry("boundary", "----geckoformboundary730a031b35ce426e73706e0de46ba922"),
+                Map.entry("boundary", "----geckoformboundaryab40168b3ce6d914091cca168b99b33"),
                 Map.entry("host", "api.jcooksey.dev")
         ));
         Context context = new Context()
@@ -118,7 +120,7 @@ public class EventTest
         };
 
         DitherRequestHandler ditherer = new DitherRequestHandler();
-        ditherer.handleRequest(event, context);
+        APIGatewayProxyResponseEvent response = ditherer.handleRequest(event, context);
         System.out.println("Done!");
     }
 }
