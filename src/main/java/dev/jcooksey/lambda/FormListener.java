@@ -11,6 +11,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
 
 public class FormListener implements MultiPart.Parser.Listener
 {
@@ -19,24 +21,42 @@ public class FormListener implements MultiPart.Parser.Listener
     FormFileType currentContentType = FormFileType.NONE;
     ByteArrayOutputStream fileByteBuffer = new ByteArrayOutputStream();
 
-    @Override
-    public void onPartBegin()
+    Map<String, BufferedImage> images = new HashMap<String, BufferedImage>();
+    int maxExpectedImages = 1;
+
+    FormListener(int maxExpectedImages)
     {
+        this.maxExpectedImages = maxExpectedImages;
+    }
+
+    public Map<String, BufferedImage> getImages()
+    {
+        return images;
     }
 
     @Override
-    public void onPartHeader(String name, String value)
+    public void onPartBegin()
     {
-        if (name.equalsIgnoreCase("content-type") && value.equalsIgnoreCase("image/png"))
+        // if the form somehow had more images attached to it than the front-end allowed, then the POST should be rejected
+        if (images.size() >= maxExpectedImages)
         {
-            currentContentType = FormFileType.PNG;
-            return;
+            throw new RuntimeException("form fields exceeded expected count");
         }
     }
 
     @Override
-    public void onPartHeaders()
+    public void onPartHeader(String name, String value) throws RuntimeException
     {
+        if (!name.equalsIgnoreCase("content-type"))
+        {
+            return;
+        }
+
+        // TODO: add other supported image formats
+        if (value.equalsIgnoreCase("image/png"))
+        {
+            currentContentType = FormFileType.PNG;
+        }
     }
 
     @Override
@@ -61,25 +81,17 @@ public class FormListener implements MultiPart.Parser.Listener
         switch (currentContentType)
         {
             case PNG:
+                // intentional fall-through so that all supported formats are parsed the same way
+            case JPEG:
                 try
                 {
-                    BufferedImage img = ImageIO.read(new ByteArrayInputStream(fileByteBuffer.toByteArray()));
-                    Graphics g = img.createGraphics();
-                    g.setColor(new Color(0, 255, 0, 100));
-                    g.fillRect(0, 0, img.getWidth(), img.getHeight());
-                    g.dispose();
-                    File tempDir = new File(System.getProperty("java.io.tmpdir") + File.separator + "output.png");
-                    // File outputFile = new File(File.separator + "tmp" + File.separator + "output.png");
-                    ImageIO.write(img, "png", tempDir);
+                    images.put(currentFieldName, ImageIO.read(new ByteArrayInputStream(fileByteBuffer.toByteArray())));
                 } catch (IOException e)
                 {
                     throw new RuntimeException(e);
                 }
                 break;
-            case JPEG:
-                break;
         }
-
 
         // reset everything for next form part
         currentFieldName = null;
