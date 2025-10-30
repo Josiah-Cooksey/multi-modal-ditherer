@@ -5,19 +5,12 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import org.eclipse.jetty.http.MultiPart;
-import org.eclipse.jetty.http.MultiPart.Parser;
-import org.eclipse.jetty.http.MultiPart.Parser.Listener;
 import org.eclipse.jetty.io.Content;
-
-import javax.imageio.ImageIO;
-import java.io.ByteArrayOutputStream;
 
 public class DitherRequestHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent>
 {
@@ -106,7 +99,7 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
     }
 
 
-    // TODO: make a wrapper of sorts for all of the validation functions since we always just return JSON as "error": "[the thrown exception]" each time there are validation issues
+    // TODO: make a wrapper of sorts for all of the validation functions since we always just return JSON as "error": "[the thrown exception string]" each time there are validation issues
     public static void JSONifyValidation()
     {
 

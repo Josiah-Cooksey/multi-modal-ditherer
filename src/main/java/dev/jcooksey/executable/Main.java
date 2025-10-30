@@ -1,11 +1,9 @@
 package dev.jcooksey.executable;
 
 import javax.imageio.ImageIO;
-import javax.imageio.ImageWriter;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.nio.file.FileSystems;
 
 public class Main
 {
