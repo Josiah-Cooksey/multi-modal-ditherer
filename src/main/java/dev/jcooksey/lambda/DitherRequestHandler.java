@@ -37,17 +37,19 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
 
         try
         {
-            validateHeaders(event, response);
+            validateHeaders(event);
         }
-        catch (HeaderValidationException e)
+        catch (FormValidationException e)
         {
+            response.setStatusCode(400);
+            response.setBody("\"error\": \"" + e.getMessage() + "\"");
             return response;
         }
 
         byte[] formData = Base64.getDecoder().decode(event.getBody());
         logger.log(new String(formData, 0, 200, StandardCharsets.UTF_8));
-
-        FormListener formListener = new FormListener();
+        BufferedImage inputImage, kernel, palette;
+        FormListener formListener = new FormListener(3);
         MultiPart.Parser formParser = new MultiPart.Parser(event.getHeaders().get("boundary"), formListener);
 
         try
@@ -55,9 +57,31 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
             Content.Chunk chunk = Content.Chunk.from(ByteBuffer.wrap(formData), false);
             formParser.parse(chunk);
             formParser.parse(Content.Chunk.EOF);
-        } catch (Throwable t)
+        }
+        catch (RuntimeException e)
+        {
+            response.setStatusCode(400);
+            response.setBody("\"error\": \"" + e.getMessage() + "\"");
+            return response;
+        }
+        catch (Throwable t)
         {
             t.printStackTrace();
+
+            response.setBody("{\"error\": \"unknown problem parsing form data'\"}");
+            response.setStatusCode(400);
+            return response;
+        }
+
+        try
+        {
+            validateImages(formListener.getImages());
+        }
+        catch (FormValidationException e)
+        {
+            response.setStatusCode(400);
+            response.setBody("\"error\": \"" + e.getMessage() + "\"");
+            return response;
         }
         // formParser.reset();
 
@@ -81,26 +105,41 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
         // that way, the front-end doesn't need to perform much extra work other than determining the response type and displaying the appropriate image or error message
     }
 
-    // returns true if headers are valid, false if invalid
-    public static void validateHeaders(APIGatewayProxyRequestEvent event, APIGatewayProxyResponseEvent response) throws HeaderValidationException
+
+    // TODO: make a wrapper of sorts for all of the validation functions since we always just return JSON as "error": "[the thrown exception]" each time there are validation issues
+    public static void JSONifyValidation()
+    {
+
+    }
+
+    public static void validateHeaders(APIGatewayProxyRequestEvent event) throws FormValidationException
     {
         if (!event.getIsBase64Encoded())
         {
-            response.setBody("{\"error\": \"input image/form was not Base64 encoded\"}");
-            response.setStatusCode(400);
-            throw new HeaderValidationException("input image/form was not Base64 encoded");
+            throw new FormValidationException("input image/form was not Base64 encoded");
         }
         if (!event.getHeaders().containsKey("content-type"))
         {
-            response.setBody("{\"error\": \"'content-type' not found\"}");
-            response.setStatusCode(400);
-            return;
+            throw new FormValidationException("'content-type' not found");
         }
         if (!event.getHeaders().get("content-type").equalsIgnoreCase("multipart/form-data"))
         {
-            response.setBody("{\"error\": \"'content-type' must be 'multipart/form-data'\"}");
-            response.setStatusCode(400);
-            return;
+            throw new FormValidationException("'content-type' must be 'multipart/form-data'");
+        }
+    }
+    public static void validateImages(Map<String, BufferedImage> images) throws FormValidationException
+    {
+        for (String key : images.keySet())
+        {
+            switch(key)
+            {
+                case "inputImage":
+                case "kernel":
+                case "palette":
+                    break;
+                default:
+                    throw new FormValidationException("form field names did not match expectations (inputImage, kernel, palette)");
+            }
         }
     }
 }
