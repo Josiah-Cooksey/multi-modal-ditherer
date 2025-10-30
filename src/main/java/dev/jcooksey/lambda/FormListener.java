@@ -59,12 +59,13 @@ public class FormListener implements MultiPart.Parser.Listener
                     String[] fileMetadata = value.split("; ");
                     for (String attribute : fileMetadata)
                     {
-                        String[] attributeSplit = attribute.split("=", 1);
+                        String[] attributeSplit = attribute.split("=", 2);
                         String attributeName = attributeSplit[0];
-                        String attributeValue = attributeSplit[1];
                         if (attributeName.equalsIgnoreCase("name"))
                         {
-                            currentFieldName = attributeValue;
+                            String attributeValue = attributeSplit[1];
+                            currentFieldName = attributeValue.replace("\"", "");
+                            break;
                         }
                     }
                     break;
@@ -72,6 +73,7 @@ public class FormListener implements MultiPart.Parser.Listener
         }
         catch (Exception e)
         {
+            // TODO: fix that this exception is never propogated to DitherRequestHandler, possibly by saving the exception, stopping the parser/listener, and manually checking for exceptions after parsing is completed or stopped
             throw new RuntimeException("an error occurred whilst parsing form headers");
         }
     }
