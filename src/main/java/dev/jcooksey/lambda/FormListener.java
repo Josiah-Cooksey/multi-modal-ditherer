@@ -15,7 +15,6 @@ import java.util.Map;
 public class FormListener implements MultiPart.Parser.Listener
 {
     String currentFieldName = null;
-    String currentFilename = null;
     FormFileType currentContentType = FormFileType.NONE;
     ByteArrayOutputStream fileByteBuffer = new ByteArrayOutputStream();
 
@@ -33,27 +32,47 @@ public class FormListener implements MultiPart.Parser.Listener
     }
 
     @Override
-    public void onPartBegin()
+    public void onPartBegin() throws RuntimeException
     {
         // if the form somehow had more images attached to it than the front-end allowed, then the POST should be rejected
         if (images.size() >= maxExpectedImages)
         {
-            throw new RuntimeException("form fields exceeded expected count");
+            throw new RuntimeException("number of form fields exceeded expected count (expected " + maxExpectedImages + ")");
         }
     }
 
     @Override
     public void onPartHeader(String name, String value) throws RuntimeException
     {
-        if (!name.equalsIgnoreCase("content-type"))
+        try
         {
-            return;
+            switch (name.toLowerCase())
+            {
+                case "content-type":
+                    // TODO: add other supported image formats
+                    if (value.equalsIgnoreCase("image/png"))
+                    {
+                        currentContentType = FormFileType.PNG;
+                    }
+                    break;
+                case "content-disposition":
+                    String[] fileMetadata = value.split("; ");
+                    for (String attribute : fileMetadata)
+                    {
+                        String[] attributeSplit = attribute.split("=", 1);
+                        String attributeName = attributeSplit[0];
+                        String attributeValue = attributeSplit[1];
+                        if (attributeName.equalsIgnoreCase("name"))
+                        {
+                            currentFieldName = attributeValue;
+                        }
+                    }
+                    break;
+            }
         }
-
-        // TODO: add other supported image formats
-        if (value.equalsIgnoreCase("image/png"))
+        catch (Exception e)
         {
-            currentContentType = FormFileType.PNG;
+            throw new RuntimeException("an error occurred whilst parsing form headers");
         }
     }
 
@@ -93,7 +112,6 @@ public class FormListener implements MultiPart.Parser.Listener
 
         // reset everything for next form part
         currentFieldName = null;
-        currentFilename = null;
         currentContentType = FormFileType.NONE;
         fileByteBuffer.reset();
     }
