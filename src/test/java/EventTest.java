@@ -32,8 +32,7 @@ public class EventTest
                 Map.entry("accept", "text/html,application/xhtml+xml,application/xml"),
                 Map.entry("application", "text/html"),
                 Map.entry("content-length", "71946"),
-                Map.entry("content-type", "multipart/form-data"),
-                Map.entry("boundary", "----geckoformboundaryab40168b3ce6d914091cca168b99b33"),
+                Map.entry("content-type", "multipart/form-data; boundary=----geckoformboundaryab40168b3ce6d914091cca168b99b33"),
                 Map.entry("host", "api.jcooksey.dev")
         ));
         Context context = new Context()
