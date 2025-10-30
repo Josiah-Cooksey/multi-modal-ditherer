@@ -5,12 +5,17 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import dev.jcooksey.core.Ditherer;
 import org.eclipse.jetty.http.MultiPart;
 import org.eclipse.jetty.io.Content;
+
+import javax.imageio.ImageIO;
 
 public class DitherRequestHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent>
 {
@@ -76,12 +81,22 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
         }
         // formParser.reset();
 
+        Ditherer ditherer = new Ditherer();
+        BufferedImage resultImage = ditherer.dither(formListener.getImages());
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        try
+        {
+            ImageIO.write(resultImage, "png", outputStream);
+        } catch (IOException e)
+        {
+            throw new RuntimeException(e);
+        }
+        String JSONImage = "\"resultImage\": \"" + Base64.getEncoder().encodeToString(outputStream.toByteArray()) + "\"";
+
         // for now, I'll just return the input image
-        response.setBody(event.getBody());
+        response.setBody(JSONImage);
         response.setStatusCode(200);
         return response;
-
-
 
         // TODO: use Apache Commons FileUpload library or ✓ jetty to parse the body of the request (multipart/form-data)
         // ✓ it needs to be converted from Base64 into binary
