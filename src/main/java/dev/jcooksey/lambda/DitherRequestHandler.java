@@ -94,20 +94,13 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
         }
         String JSONImage = "{\"resultImage\": \"" + Base64.getEncoder().encodeToString(outputStream.toByteArray()) + "\"}";
 
-        // for now, I'll just return the input image
         response.setBody(JSONImage);
         response.setStatusCode(200);
         return response;
 
-        // TODO: use Apache Commons FileUpload library or ✓ jetty to parse the body of the request (multipart/form-data)
-        // ✓ it needs to be converted from Base64 into binary
-        // ✓ then parsed into the constituent form fields
-        // ✓ afterwards, we need to validate that the expected data was uploaded
-        // if it's valid, we can perform the dithering
-        // ✓ finally, for this lambda module specifically, we need to package the data to return it
+        // TODO: ✓ package the data to return it
         // ✓ I'd like to use json formatting because the website can then handle the response in a more standard way
         // but the downside is that we need to encode it as base64, which uses more processing time encoding in the back-end and decoding on the front-end
-
         // instead, it may be possible to return a image/png response for valid requests but a json response for any issues
         // that way, the front-end doesn't need to perform much extra work other than determining the response type and displaying the appropriate image or error message
     }
