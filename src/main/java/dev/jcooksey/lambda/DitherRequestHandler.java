@@ -86,8 +86,9 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try
         {
+            // TODO: when I somehow set the resultImage to null, the try/catch didn't catch (java.lang.IllegalArgumentException: image == null!)
             ImageIO.write(resultImage, "png", outputStream);
-        } catch (IOException e)
+        } catch (Exception e)
         {
             throw new RuntimeException(e);
         }
