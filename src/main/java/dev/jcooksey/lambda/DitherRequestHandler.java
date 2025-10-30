@@ -21,21 +21,20 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent event, Context context)
     {
-        final LambdaLogger logger = context.getLogger();
-        logger.log("Headers: " + event.getHeaders());
-        logger.log("Body: " + event.getBody());
-        logger.log("IsBase64Encoded: " + event.getIsBase64Encoded());
-        logger.log("Boundary: " + event.getHeaders().get("boundary"));
-
         APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();
         Map<String, String> responseHeaders = new HashMap<>();
         responseHeaders.put("content-type", "application/json");
         responseHeaders.put("access-control-allow-origin", "https://jcooksey.dev");
         response.setHeaders(responseHeaders);
 
+        final LambdaLogger logger = context.getLogger();
+        logger.log("Headers: " + event.getHeaders());
+        logger.log("Body: " + event.getBody());
+        logger.log("IsBase64Encoded: " + event.getIsBase64Encoded());
+        String boundary;
         try
         {
-            validateHeaders(event);
+            boundary = validateHeaders(event, logger);
         }
         catch (FormValidationException e)
         {
@@ -47,7 +46,7 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
         byte[] formData = Base64.getDecoder().decode(event.getBody());
         logger.log(new String(formData, 0, 200, StandardCharsets.UTF_8));
         FormListener formListener = new FormListener(3);
-        MultiPart.Parser formParser = new MultiPart.Parser(event.getHeaders().get("boundary"), formListener);
+        MultiPart.Parser formParser = new MultiPart.Parser(boundary, formListener);
 
         try
         {
@@ -111,7 +110,7 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
 
     }
 
-    public static void validateHeaders(APIGatewayProxyRequestEvent event) throws FormValidationException
+    public static String validateHeaders(APIGatewayProxyRequestEvent event, LambdaLogger logger) throws FormValidationException
     {
         if (!event.getIsBase64Encoded())
         {
@@ -121,10 +120,18 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
         {
             throw new FormValidationException("'content-type' not found");
         }
-        if (!event.getHeaders().get("content-type").equalsIgnoreCase("multipart/form-data"))
+
+        String[] contentTypeHolder = splitContentTypeAndBoundary(event.getHeaders().get("content-type"));
+        if (!contentTypeHolder[0].equalsIgnoreCase("multipart/form-data"))
         {
             throw new FormValidationException("'content-type' must be 'multipart/form-data'");
         }
+        if (contentTypeHolder.length != 2)
+        {
+            throw new FormValidationException("multipart/form-data must include boundary");
+        }
+        logger.log("Boundary: " + contentTypeHolder[1]);
+        return contentTypeHolder[1];
     }
 
     public static void validateImages(Map<String, BufferedImage> images) throws FormValidationException
@@ -141,5 +148,22 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
                     throw new FormValidationException("form field names did not match expectations (inputImage, kernel, palette)");
             }
         }
+    }
+
+    public static String[] splitContentTypeAndBoundary(String contentTypeAndBoundary)
+    {
+        //"content-type=multipart/form-data; boundary=----geckoformboundary1da05be6da18d993830a9652a2c4c80e"
+        String[] splitString = contentTypeAndBoundary.split("; ", 2);
+        if (splitString.length == 2)
+        {
+            try
+            {
+                splitString[1] = splitString[1].split("=", 2)[1];
+            } catch (ArrayIndexOutOfBoundsException e)
+            {
+
+            }
+        }
+        return splitString;
     }
 }
