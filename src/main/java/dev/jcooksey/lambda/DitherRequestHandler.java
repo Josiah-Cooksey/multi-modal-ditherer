@@ -41,15 +41,13 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
 
         byte[] formData = Base64.getDecoder().decode(event.getBody());
         logger.log(new String(formData, 0, 200, StandardCharsets.UTF_8));
-        BufferedImage inputImage, kernel, palette;
         FormListener formListener = new FormListener(3);
         MultiPart.Parser formParser = new MultiPart.Parser(event.getHeaders().get("boundary"), formListener);
 
         try
         {
-            Content.Chunk chunk = Content.Chunk.from(ByteBuffer.wrap(formData), false);
+            Content.Chunk chunk = Content.Chunk.from(ByteBuffer.wrap(formData), true);
             formParser.parse(chunk);
-            formParser.parse(Content.Chunk.EOF);
         }
         catch (RuntimeException e)
         {
@@ -98,7 +96,6 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
         // that way, the front-end doesn't need to perform much extra work other than determining the response type and displaying the appropriate image or error message
     }
 
-
     // TODO: make a wrapper of sorts for all of the validation functions since we always just return JSON as "error": "[the thrown exception string]" each time there are validation issues
     public static void JSONifyValidation()
     {
@@ -120,6 +117,7 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
             throw new FormValidationException("'content-type' must be 'multipart/form-data'");
         }
     }
+
     public static void validateImages(Map<String, BufferedImage> images) throws FormValidationException
     {
         for (String key : images.keySet())
