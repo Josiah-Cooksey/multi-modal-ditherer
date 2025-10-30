@@ -30,6 +30,7 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
         APIGatewayProxyResponseEvent response = new APIGatewayProxyResponseEvent();
         Map<String, String> responseHeaders = new HashMap<>();
         responseHeaders.put("content-type", "application/json");
+        responseHeaders.put("access-control-allow-origin", "https://jcooksey.dev");
         response.setHeaders(responseHeaders);
 
         try
