@@ -73,7 +73,7 @@ public class FormListener implements MultiPart.Parser.Listener
         }
         catch (Exception e)
         {
-            // TODO: fix that this exception is never propogated to DitherRequestHandler, possibly by saving the exception, stopping the parser/listener, and manually checking for exceptions after parsing is completed or stopped
+            // TODO: fix that this exception is never propagated to DitherRequestHandler, possibly by saving the exception, stopping the parser/listener, and manually checking for exceptions after parsing is completed or stopped
             throw new RuntimeException("an error occurred whilst parsing form headers");
         }
     }
