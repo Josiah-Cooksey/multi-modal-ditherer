@@ -40,7 +40,7 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
         catch (FormValidationException e)
         {
             response.setStatusCode(400);
-            response.setBody("\"error\": \"" + e.getMessage() + "\"");
+            response.setBody("{\"error\": \"" + e.getMessage() + "\"}");
             return response;
         }
 
@@ -57,7 +57,7 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
         catch (RuntimeException e)
         {
             response.setStatusCode(400);
-            response.setBody("\"error\": \"" + e.getMessage() + "\"");
+            response.setBody("{\"error\": \"" + e.getMessage() + "\"}");
             return response;
         }
         catch (Throwable t)
@@ -76,7 +76,7 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
         catch (FormValidationException e)
         {
             response.setStatusCode(400);
-            response.setBody("\"error\": \"" + e.getMessage() + "\"");
+            response.setBody("{\"error\": \"" + e.getMessage() + "\"}");
             return response;
         }
         // formParser.reset();
@@ -91,7 +91,7 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
         {
             throw new RuntimeException(e);
         }
-        String JSONImage = "\"resultImage\": \"" + Base64.getEncoder().encodeToString(outputStream.toByteArray()) + "\"";
+        String JSONImage = "{\"resultImage\": \"" + Base64.getEncoder().encodeToString(outputStream.toByteArray()) + "\"}";
 
         // for now, I'll just return the input image
         response.setBody(JSONImage);
