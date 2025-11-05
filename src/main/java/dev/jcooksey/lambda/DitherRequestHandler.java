@@ -91,9 +91,15 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
         {
             throw new RuntimeException(e);
         }
-        String JSONImage = "{\"resultImage\": \"" + Base64.getEncoder().encodeToString(outputStream.toByteArray()) + "\"}";
 
-        response.setBody(JSONImage);
+        // TODO: use streaming to programmatically create the json for the response body to reduce total runtime
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("{\"resultImage\": \"");
+        stringBuilder.append(Base64.getEncoder().encodeToString(outputStream.toByteArray()));
+        stringBuilder.append("\"}");
+        // String JSONImage = "{\"resultImage\": \"" + Base64.getEncoder().encodeToString(outputStream.toByteArray()) + "\"}";
+
+        response.setBody(stringBuilder.toString());
         response.setStatusCode(200);
         return response;
 
