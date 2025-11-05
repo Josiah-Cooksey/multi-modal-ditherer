@@ -53,6 +53,9 @@ public class FormListener implements MultiPart.Parser.Listener
                     if (value.equalsIgnoreCase("image/png"))
                     {
                         currentContentType = FormFileType.PNG;
+                    } else if (value.equalsIgnoreCase("image/jpeg"))
+                    {
+                        currentContentType = FormFileType.JPEG;
                     }
                     break;
                 case "content-disposition":
@@ -99,12 +102,15 @@ public class FormListener implements MultiPart.Parser.Listener
     {
         switch (currentContentType)
         {
-            case PNG:
+            case FormFileType.PNG:
                 // intentional fall-through so that all supported formats are parsed the same way
-            case JPEG:
+            case FormFileType.JPEG:
                 try
                 {
-                    images.put(currentFieldName, ImageIO.read(new ByteArrayInputStream(fileByteBuffer.toByteArray())));
+                    byte[] byteTest = fileByteBuffer.toByteArray();
+                    ByteArrayInputStream baisTest = new ByteArrayInputStream(byteTest);
+                    BufferedImage test = ImageIO.read(baisTest);
+                    images.put(currentFieldName, test);
                 } catch (IOException e)
                 {
                     throw new RuntimeException(e);
