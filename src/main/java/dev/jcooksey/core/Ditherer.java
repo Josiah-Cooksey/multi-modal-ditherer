@@ -17,12 +17,6 @@ public class Ditherer
     public BufferedImage dither(Map<String, BufferedImage> images)
     {
         ArrayList<Color> paletteColors = getImageColors(images.get("palette"));
-        /*ArrayList<Color> paletteColors = new ArrayList<>();
-        paletteColors.add(Color.CYAN);
-        paletteColors.add(Color.MAGENTA);
-        paletteColors.add(Color.YELLOW);
-        paletteColors.add(Color.BLACK);
-        paletteColors.add(Color.WHITE);*/
 
         BufferedImage ditheredImage = simpleDither(images.get("inputImage"), paletteColors);
 
