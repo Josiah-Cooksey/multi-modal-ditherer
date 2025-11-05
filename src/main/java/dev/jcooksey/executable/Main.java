@@ -1,9 +1,12 @@
 package dev.jcooksey.executable;
 
+import dev.jcooksey.core.Ditherer;
+
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.ArrayList;
 
 public class Main
 {
@@ -49,13 +52,19 @@ public class Main
             try
             {
                 BufferedImage inputImage = ImageIO.read(inputFiles[i]);
-                Graphics g = inputImage.createGraphics();
-                g.setColor(new Color(0, 255, 0, 100));
-                g.fillRect(0, 0, inputImage.getWidth(), inputImage.getHeight());
-                g.dispose();
 
-                File outputFile = new File(outputFolder + SEP + "output.png");
-                ImageIO.write(inputImage, "png", outputFile);
+                ArrayList<Color> paletteColors = new ArrayList<>();
+                paletteColors.add(Color.CYAN);
+                paletteColors.add(Color.MAGENTA);
+                paletteColors.add(Color.YELLOW);
+                paletteColors.add(Color.BLACK);
+                paletteColors.add(Color.WHITE);
+
+                Ditherer ditherer = new Ditherer();
+                BufferedImage outputImage = ditherer.simpleDither(inputImage, paletteColors);
+
+                File outputFile = new File(outputFolder + SEP + inputFiles[i].getName() + "-dithered.png");
+                ImageIO.write(outputImage, "png", outputFile);
 
             } catch (Exception e)
             {
