@@ -22,6 +22,14 @@ public class BigColor
         blue = color.getBlue();
     }
 
+    public BigColor(int rgb)
+    {
+        int value = 0xff000000 | rgb;
+        red = (value >> 16) & 0xFF;
+        green = (value >> 8) & 0xFF;
+        blue = (value >> 0) & 0xFF;
+    }
+
     public void addColor(Color color)
     {
         setRed(color.getRed() + this.red);
@@ -66,13 +74,12 @@ public class BigColor
 
     public double getColorDistance(Color color)
     {
-        double redDistance = (double) (Math.abs(this.red - color.getRed()));
-        double greenDistance = (double) (Math.abs(this.green - color.getGreen()));
-        double blueDistance = (double) (Math.abs(this.blue - color.getBlue()));
+        int redDistance = Math.abs(this.red - color.getRed());
+        int greenDistance = Math.abs(this.green - color.getGreen());
+        int blueDistance = Math.abs(this.blue - color.getBlue());
 
-        double firstHypotenuse = Math.sqrt(Math.pow(redDistance, 2) + Math.pow(greenDistance, 2));
-        double resultDistance = Math.sqrt(Math.pow(firstHypotenuse, 2) + Math.pow(blueDistance, 2));
-        return resultDistance;
+        // double firstHypotenuse = Math.sqrt(Math.pow(redDistance, 2) + Math.pow(greenDistance, 2));
+        return Math.sqrt(Math.pow(redDistance, 2) + Math.pow(greenDistance, 2) + Math.pow(blueDistance, 2));
     }
 
     public Color getBoundedColor()
