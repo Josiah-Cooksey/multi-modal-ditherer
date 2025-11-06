@@ -1,9 +1,11 @@
 package dev.jcooksey.lambda;
 
 import org.eclipse.jetty.http.MultiPart;
+import org.eclipse.jetty.http.MultiPartCompliance;
 import org.eclipse.jetty.io.Content;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -14,6 +16,8 @@ import java.util.Map;
 
 public class FormListener implements MultiPart.Parser.Listener
 {
+    String failureMessage = "";
+
     String currentFieldName = null;
     FormFileType currentContentType = FormFileType.NONE;
     ByteArrayOutputStream fileByteBuffer = new ByteArrayOutputStream();
@@ -109,8 +113,16 @@ public class FormListener implements MultiPart.Parser.Listener
                 {
                     byte[] byteTest = fileByteBuffer.toByteArray();
                     ByteArrayInputStream baisTest = new ByteArrayInputStream(byteTest);
-                    BufferedImage test = ImageIO.read(baisTest);
-                    images.put(currentFieldName, test);
+                    BufferedImage src = ImageIO.read(baisTest);
+                    BufferedImage inputImage = new BufferedImage(
+                            src.getWidth(),
+                            src.getHeight(),
+                            BufferedImage.TYPE_INT_RGB
+                    );
+                    Graphics2D g = inputImage.createGraphics();
+                    g.drawImage(src, 0, 0, null);
+                    g.dispose();
+                    images.put(currentFieldName, inputImage);
                 } catch (IOException e)
                 {
                     throw new RuntimeException(e);
@@ -123,4 +135,19 @@ public class FormListener implements MultiPart.Parser.Listener
         currentContentType = FormFileType.NONE;
         fileByteBuffer.reset();
     }
+
+    @Override
+    public void onFailure(Throwable failure)
+    {
+        System.err.println("Multipart parsing failed: " + failure.getMessage());
+        failureMessage = failure.getMessage();
+    }
+
+    /*@Override
+    public void onViolation(MultiPartCompliance.Violation violation)
+    {
+        System.err.println("Multipart parsing violation: " + violation.getName());
+        System.err.println("Multipart parsing violation details: " + violation.getDescription());
+        failureMessage = violation.getName();
+    }*/
 }
