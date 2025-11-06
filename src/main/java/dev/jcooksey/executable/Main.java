@@ -51,7 +51,15 @@ public class Main
 
             try
             {
-                BufferedImage inputImage = ImageIO.read(inputFiles[i]);
+                BufferedImage src = ImageIO.read(inputFiles[i]);
+                BufferedImage inputImage = new BufferedImage(
+                    src.getWidth(),
+                    src.getHeight(),
+                    BufferedImage.TYPE_INT_RGB
+                );
+                Graphics2D g = inputImage.createGraphics();
+                g.drawImage(src, 0, 0, null);
+                g.dispose();
 
                 ArrayList<Color> paletteColors = new ArrayList<>();
                 paletteColors.add(Color.CYAN);
@@ -61,7 +69,8 @@ public class Main
                 paletteColors.add(Color.WHITE);
 
                 Ditherer ditherer = new Ditherer();
-                BufferedImage outputImage = ditherer.simpleDither(inputImage, paletteColors);
+                ditherer.setPalette(paletteColors);
+                BufferedImage outputImage = ditherer.simpleDither(inputImage);
 
                 File outputFile = new File(outputFolder + SEP + inputFiles[i].getName() + "-dithered.png");
                 ImageIO.write(outputImage, "png", outputFile);
