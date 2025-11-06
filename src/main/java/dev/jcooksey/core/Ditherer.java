@@ -11,8 +11,6 @@ import java.util.Map;
 
 public class Ditherer
 {
-    private LinkedHashMap<BigColor, Color> recentlyUsedColorsCache = new LinkedHashMap<>();
-    private final int maxColorCacheSize = 10;
 
     public BufferedImage dither(Map<String, BufferedImage> images)
     {
@@ -37,7 +35,6 @@ public class Ditherer
     public BufferedImage simpleDither(BufferedImage inputImage, ArrayList<Color> paletteColors)
     {
         BufferedImage outputImage = new BufferedImage(inputImage.getWidth(), inputImage.getHeight(), inputImage.getType());
-        Graphics2D g = outputImage.createGraphics();
 
         BigColor totalErrors = new BigColor(0, 0, 0);
         for (int x = 0; x < inputImage.getWidth(); x++)
@@ -49,14 +46,12 @@ public class Ditherer
                 targetColor.addError(totalErrors);
                 Color ditherColor = getNearestColor(paletteColors, targetColor);
 
-                g.setColor(ditherColor);
-                g.fillRect(x, y, 2, 2);
+                outputImage.setRGB(x, y, ditherColor.getRGB());
 
                 totalErrors = targetColor;
                 totalErrors.removeColor(ditherColor);
             }
         }
-        g.dispose();
 
         return outputImage;
     }
@@ -83,11 +78,6 @@ public class Ditherer
 
     private Color getNearestColor(ArrayList<Color> availableColors, BigColor targetColor)
     {
-        if (recentlyUsedColorsCache.containsKey(targetColor))
-        {
-            Color result = recentlyUsedColorsCache.get(targetColor);
-            return result;
-        }
 
         double leastDistance = Double.MAX_VALUE;
         Color leastColor = null;
@@ -100,12 +90,6 @@ public class Ditherer
             }
             leastDistance = newDistance;
             leastColor = color;
-        }
-
-        recentlyUsedColorsCache.putFirst(targetColor, leastColor);
-        if (recentlyUsedColorsCache.size() >= maxColorCacheSize)
-        {
-            recentlyUsedColorsCache.pollLastEntry();
         }
         return leastColor;
     }
