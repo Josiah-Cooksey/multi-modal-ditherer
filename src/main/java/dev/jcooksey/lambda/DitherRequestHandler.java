@@ -18,6 +18,8 @@ import javax.imageio.ImageIO;
 
 public class DitherRequestHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent>
 {
+    final static int expectedImageCount = 3;
+
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent event, Context context)
     {
@@ -29,7 +31,7 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
 
         final LambdaLogger logger = context.getLogger();
         logger.log("Headers: " + event.getHeaders());
-        // logger.log("Body: " + event.getBody());
+        logger.log("Body: " + event.getBody());
         logger.log("IsBase64Encoded: " + event.getIsBase64Encoded());
         String boundary;
         try
@@ -44,8 +46,8 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
         }
 
         byte[] formData = Base64.getDecoder().decode(event.getBody());
-        logger.log(new String(formData, 0, 200, StandardCharsets.UTF_8));
-        FormListener formListener = new FormListener(3);
+        // logger.log(new String(formData, 0, 200, StandardCharsets.UTF_8));
+        FormListener formListener = new FormListener(expectedImageCount);
         MultiPart.Parser formParser = new MultiPart.Parser(boundary, formListener);
 
         try
@@ -65,6 +67,12 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
 
             response.setBody("{\"error\": \"unknown problem parsing form data'\"}");
             response.setStatusCode(400);
+            return response;
+        }
+        if (!formListener.failureMessage.isEmpty())
+        {
+            response.setStatusCode(400);
+            response.setBody("{\"error\": \"malformed form data\"}");
             return response;
         }
 
@@ -142,6 +150,10 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
 
     public static void validateImages(Map<String, BufferedImage> images) throws FormValidationException
     {
+        if (images.size() != expectedImageCount)
+        {
+            throw new FormValidationException("form did not contain the 3 expected images (inputImage, kernel, palette)");
+        }
         for (String key : images.keySet())
         {
             switch(key)
