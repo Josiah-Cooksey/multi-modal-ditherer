@@ -20,7 +20,7 @@ public class EventTest
         String longString = "";
         try
         {
-            longString = Files.readString(Path.of("src/test/resources/requestBody.txt"));
+            longString = Files.readString(Path.of("src/test/resources/requestBodyLarge.txt"));
         } catch (IOException e)
         {
             e.printStackTrace();
@@ -31,8 +31,8 @@ public class EventTest
         event.setHeaders(Map.ofEntries(
                 Map.entry("accept", "text/html,application/xhtml+xml,application/xml"),
                 Map.entry("application", "text/html"),
-                Map.entry("content-length", "71946"),
-                Map.entry("content-type", "multipart/form-data; boundary=----geckoformboundaryab40168b3ce6d914091cca168b99b33"),
+                Map.entry("content-length", "2773471"),
+                Map.entry("content-type", "multipart/form-data; boundary=----WebKitFormBoundarysSQ9xJbcoYGB7N0D"),
                 Map.entry("host", "api.jcooksey.dev")
         ));
         Context context = new Context()
