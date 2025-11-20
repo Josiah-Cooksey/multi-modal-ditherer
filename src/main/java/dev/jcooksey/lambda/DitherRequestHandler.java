@@ -31,7 +31,7 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
 
         final LambdaLogger logger = context.getLogger();
         logger.log("Headers: " + event.getHeaders());
-        logger.log("Body: " + event.getBody());
+        // logger.log("Body: " + event.getBody());
         logger.log("IsBase64Encoded: " + event.getIsBase64Encoded());
         String boundary;
         try
