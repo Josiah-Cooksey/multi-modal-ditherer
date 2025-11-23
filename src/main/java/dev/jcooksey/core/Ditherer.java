@@ -63,7 +63,6 @@ public class Ditherer
         int[] pixels = dataBuffer.getData();
         BigColor totalErrors = new BigColor(0, 0, 0);
 
-        ArrayList<Integer> firstOrderCurve = new ArrayList<>(List.of(2, 1, 0));
         ArrayList<Integer> secondOrderRotations = new ArrayList<>(List.of(-1, 0, 0, 1));
 
         int x = 0;
@@ -118,7 +117,7 @@ public class Ditherer
                     curveStep = quotient % 4;
                 }
 
-                ArrayList<Integer> currentTierCurve = firstOrderCurve;
+                ArrayList<Integer> currentTierCurve = new ArrayList<>(List.of(2, 1, 0));;
                 int rotationalDepth = 0;
 
                 int rotationalIncrement = 0;
@@ -139,14 +138,14 @@ public class Ditherer
                 {
                     for(int i = 0; i > rotationalIncrement; i--)
                     {
-                        currentTierCurve = rotateDirections90AndReverse(currentTierCurve, -1);
+                        rotateDirections90AndReverse(currentTierCurve, -1);
                     }
                 }
                 else if (rotationalIncrement > 0)
                 {
                     for(int i = 0; i < rotationalIncrement; i++)
                     {
-                        currentTierCurve = rotateDirections90AndReverse(currentTierCurve, 1);
+                        rotateDirections90AndReverse(currentTierCurve, 1);
                     }
                 }
 
@@ -213,21 +212,19 @@ public class Ditherer
         return outputImage;
     }
 
-    private ArrayList<Integer> rotateDirections90AndReverse(ArrayList<Integer> originalDirections, int rotation)
+    private void rotateDirections90AndReverse(ArrayList<Integer> directions, int rotation)
     {
         if (rotation == 0)
         {
-            return originalDirections;
+            return;
         }
+        int a = directions.get(0);
+        int b = directions.get(1);
+        int c = directions.get(2);
 
-        ArrayList<Integer> newDirections = new ArrayList<>();
-        for (int i = originalDirections.size() - 1; i >= 0; i--)
-        {
-            int direction = originalDirections.get(i);
-            newDirections.add(oppositeDirection(rotateDirection90(direction, rotation)));
-        }
-
-        return newDirections;
+        directions.set(0, oppositeDirection(rotateDirection90(c, rotation)));
+        directions.set(1, oppositeDirection(rotateDirection90(b, rotation)));
+        directions.set(2, oppositeDirection(rotateDirection90(a, rotation)));
     }
 
     private int oppositeDirection(int direction)
