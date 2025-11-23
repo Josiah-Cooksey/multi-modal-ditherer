@@ -70,7 +70,7 @@ public class Main
 
                 Ditherer ditherer = new Ditherer();
                 ditherer.setPalette(paletteColors);
-                BufferedImage outputImage = ditherer.simpleDither(inputImage);
+                BufferedImage outputImage = ditherer.hilbertDither(inputImage);
 
                 File outputFile = new File(outputFolder + SEP + inputFiles[i].getName() + "-dithered.png");
                 ImageIO.write(outputImage, "png", outputFile);
