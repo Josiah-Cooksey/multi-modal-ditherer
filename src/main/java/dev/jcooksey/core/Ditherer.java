@@ -73,8 +73,8 @@ public class Ditherer
         int[] pixels = dataBuffer.getData();
         BigColor totalErrors = new BigColor(0, 0, 0);
 
-        ArrayList<Direction> firstOrderCurve = new ArrayList<>(List.of(Direction.DOWN, Direction.RIGHT, Direction.UP));
-        ArrayList<Rotation> secondOrderRotations = new ArrayList<>(List.of(Rotation.LEFT, Rotation.UP, Rotation.UP, Rotation.RIGHT));
+        ArrayList<Integer> firstOrderCurve = new ArrayList<>(List.of(2, 1, 0));
+        ArrayList<Integer> secondOrderRotations = new ArrayList<>(List.of(-1, 0, 0, 1));
 
         int x = 0;
         int y = 0;
@@ -108,9 +108,9 @@ public class Ditherer
                 // outputImage.setRGB(x, y, step*255);
             }
 
-            ArrayList<ArrayList<Direction>> tiers = new ArrayList<>();
+            ArrayList<ArrayList<Integer>> tiers = new ArrayList<>();
             ArrayList<Integer> tierIndices = new ArrayList<>();
-            ArrayList<Rotation> rotationsPerTier = new ArrayList<>();
+            ArrayList<Integer> rotationsPerTier = new ArrayList<>();
             int tierDivisor = 1;
             int hilbertOrder = 0;
 
@@ -135,12 +135,12 @@ public class Ditherer
                     curveStep = quotient % 4;
                 }
 
-                ArrayList<Direction> currentTierCurve = firstOrderCurve;
+                ArrayList<Integer> currentTierCurve = firstOrderCurve;
                 int rotational_depth = 0;
 
-                for(Rotation rotation : rotationsPerTier)
+                for(int rotation : rotationsPerTier)
                 {
-                    if (rotation == Rotation.LEFT || rotation == Rotation.RIGHT)
+                    if (rotation == -1 || rotation == 1)
                     {
                         rotational_depth += 1;
                     }
@@ -164,8 +164,8 @@ public class Ditherer
             }
 
             int tierIndex = 0;
-            Direction nextDirection = null;
-            for (ArrayList<Direction> tier : tiers.reversed())
+            Integer nextDirection = null;
+            for (ArrayList<Integer> tier : tiers.reversed())
             {
                 // tier_step = (int) ((((step + 1) / (pow(4, tier_index)))) - 1) % 4
                 // int tierStep = (((((step + 1) / (1 << (2 * tierIndex)))) - 1) + 4) % 4;
@@ -189,19 +189,19 @@ public class Ditherer
 
             switch (nextDirection)
             {
-                case Direction.UP:
+                case 0:
                     y -= 1;
                     break;
 
-                case Direction.DOWN:
+                case 2:
                     y += 1;
                     break;
 
-                case Direction.LEFT:
+                case 3:
                     x -= 1;
                     break;
 
-                case Direction.RIGHT:
+                case 1:
                     x += 1;
                     break;
             }
@@ -212,7 +212,7 @@ public class Ditherer
         return outputImage;
     }
 
-    private ArrayList<Direction> rotateDirections90AndReverse(ArrayList<Direction> originalDirections, Rotation rotation)
+    /*private ArrayList<Direction> rotateDirections90AndReverse(ArrayList<Direction> originalDirections, Rotation rotation)
     {
         if (rotation == Rotation.UP)
         {
@@ -222,6 +222,22 @@ public class Ditherer
         ArrayList<Direction> newDirections = new ArrayList<>();
         for (Direction direction : originalDirections.reversed())
         {
+            newDirections.add(oppositeDirection(rotateDirection90(direction, rotation)));
+        }
+
+        return newDirections;
+    }*/
+    private ArrayList<Integer> rotateDirections90AndReverse(ArrayList<Integer> originalDirections, int rotation)
+    {
+        if (rotation == 0)
+        {
+            return originalDirections;
+        }
+
+        ArrayList<Integer> newDirections = new ArrayList<>();
+        for (int i = originalDirections.size() - 1; i >= 0; i--)
+        {
+            int direction = originalDirections.get(i);
             newDirections.add(oppositeDirection(rotateDirection90(direction, rotation)));
         }
 
@@ -238,6 +254,10 @@ public class Ditherer
             case Direction.RIGHT -> Direction.LEFT;
         };
     }
+    private int oppositeDirection(int direction)
+    {
+        return (direction + 2) % 4;
+    }
 
     // positive rotations are clockwise
     // negative rotations are counterclockwise
@@ -245,6 +265,10 @@ public class Ditherer
     private Direction rotateDirection90(Direction original_direction, Rotation rotation)
     {
         return Direction.from((4 + (original_direction.ordinal() + rotation.ordinal())) % 4);
+    }
+    private int rotateDirection90(int original_direction, int rotation)
+    {
+        return (4 + (original_direction + rotation)) % 4;
     }
 
     private ArrayList<Color> getImageColors(BufferedImage image)
