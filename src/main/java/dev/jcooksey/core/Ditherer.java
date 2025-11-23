@@ -27,16 +27,6 @@ public class Ditherer
 
         BufferedImage ditheredImage = simpleDither(images.get("inputImage"));
 
-        /*try
-        {
-            ImageIO.write(images.get("palette"), "png", new File("palette.png"));
-            ImageIO.write(images.get("kernel"), "png", new File("kernel.png"));
-            ImageIO.write(images.get("inputImage"), "png", new File("inputImage.png"));
-            ImageIO.write(ditheredImage, "png", new File("output.png"));
-        } catch (IOException e)
-        {
-            throw new RuntimeException(e);
-        }*/
         return ditheredImage;
     }
 
@@ -104,8 +94,6 @@ public class Ditherer
 
                 totalErrors = targetColor;
                 totalErrors.removeColor(ditherColor);
-
-                // outputImage.setRGB(x, y, step*255);
             }
 
             ArrayList<ArrayList<Integer>> tiers = new ArrayList<>();
@@ -125,12 +113,7 @@ public class Ditherer
                 }
                 else
                 {
-                    // curveStep = Math.abs(Math.floor((((step) / (Math.pow(4, (maxOrder - hilbertOrder))))) - (4 * hilbertOrder)) % 4);
-                    // broken curveStep = Math.abs(Math.floor((step / (1 << (2 * (maxOrder - hilbertOrder))) - (4 * hilbertOrder))) % 4);
-
-
-                    // curveStep = (((step / (Math.pow(4, (maxOrder - hilbertOrder))))) - (4 * hilbertOrder)) % 4;
-                    int divisor = (1 << (2 * (maxOrder - hilbertOrder))); // 4 ^ (maxOrder - hilbertOrder)
+                    int divisor = (1 << (2 * (maxOrder - hilbertOrder)));
                     int quotient = step / divisor;
                     curveStep = quotient % 4;
                 }
@@ -138,7 +121,6 @@ public class Ditherer
                 ArrayList<Integer> currentTierCurve = firstOrderCurve;
                 int rotationalDepth = 0;
 
-                ArrayList<Integer> reducedRotations = new ArrayList<>();
                 int rotationalIncrement = 0;
                 for (int rotation : rotationsPerTier)
                 {
@@ -168,15 +150,6 @@ public class Ditherer
                     }
                 }
 
-                /*for(int rotation : rotationsPerTier)
-                {
-                    if (rotation == -1 || rotation == 1)
-                    {
-                        rotationalDepth += 1;
-                    }
-                    currentTierCurve = rotateDirections90AndReverse(currentTierCurve, rotation);
-                }*/
-
                 tiers.add(currentTierCurve);
                 tierIndices.add(curveStep);
 
@@ -197,8 +170,6 @@ public class Ditherer
             Integer nextDirection = null;
             for (ArrayList<Integer> tier : tiers.reversed())
             {
-                // tier_step = (int) ((((step + 1) / (pow(4, tier_index)))) - 1) % 4
-                // int tierStep = (((((step + 1) / (1 << (2 * tierIndex)))) - 1) + 4) % 4;
                 int tierStep = tierIndices.reversed().get(tierIndex);
 
                 if (tierStep == 3)
@@ -242,21 +213,6 @@ public class Ditherer
         return outputImage;
     }
 
-    /*private ArrayList<Direction> rotateDirections90AndReverse(ArrayList<Direction> originalDirections, Rotation rotation)
-    {
-        if (rotation == Rotation.UP)
-        {
-            return originalDirections;
-        }
-
-        ArrayList<Direction> newDirections = new ArrayList<>();
-        for (Direction direction : originalDirections.reversed())
-        {
-            newDirections.add(oppositeDirection(rotateDirection90(direction, rotation)));
-        }
-
-        return newDirections;
-    }*/
     private ArrayList<Integer> rotateDirections90AndReverse(ArrayList<Integer> originalDirections, int rotation)
     {
         if (rotation == 0)
@@ -274,16 +230,6 @@ public class Ditherer
         return newDirections;
     }
 
-    private Direction oppositeDirection(Direction direction)
-    {
-        return switch (direction)
-        {
-            case Direction.UP -> Direction.DOWN;
-            case Direction.DOWN -> Direction.UP;
-            case Direction.LEFT -> Direction.RIGHT;
-            case Direction.RIGHT -> Direction.LEFT;
-        };
-    }
     private int oppositeDirection(int direction)
     {
         return (direction + 2) % 4;
@@ -292,10 +238,6 @@ public class Ditherer
     // positive rotations are clockwise
     // negative rotations are counterclockwise
     // zero rotation returns the same direction
-    private Direction rotateDirection90(Direction original_direction, Rotation rotation)
-    {
-        return Direction.from((4 + (original_direction.ordinal() + rotation.ordinal())) % 4);
-    }
     private int rotateDirection90(int original_direction, int rotation)
     {
         return (4 + (original_direction + rotation)) % 4;
