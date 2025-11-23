@@ -136,27 +136,57 @@ public class Ditherer
                 }
 
                 ArrayList<Integer> currentTierCurve = firstOrderCurve;
-                int rotational_depth = 0;
+                int rotationalDepth = 0;
 
-                for(int rotation : rotationsPerTier)
+                ArrayList<Integer> reducedRotations = new ArrayList<>();
+                int rotationalIncrement = 0;
+                for (int rotation : rotationsPerTier)
+                {
+                    if (rotation == -1)
+                    {
+                        rotationalIncrement -= 1;
+                        rotationalDepth += 1;
+                    }
+                    else if (rotation == 1)
+                    {
+                        rotationalIncrement += 1;
+                        rotationalDepth += 1;
+                    }
+                }
+                if (rotationalIncrement < 0)
+                {
+                    for(int i = 0; i > rotationalIncrement; i--)
+                    {
+                        currentTierCurve = rotateDirections90AndReverse(currentTierCurve, -1);
+                    }
+                }
+                else if (rotationalIncrement > 0)
+                {
+                    for(int i = 0; i < rotationalIncrement; i++)
+                    {
+                        currentTierCurve = rotateDirections90AndReverse(currentTierCurve, 1);
+                    }
+                }
+
+                /*for(int rotation : rotationsPerTier)
                 {
                     if (rotation == -1 || rotation == 1)
                     {
-                        rotational_depth += 1;
+                        rotationalDepth += 1;
                     }
                     currentTierCurve = rotateDirections90AndReverse(currentTierCurve, rotation);
-                }
+                }*/
 
                 tiers.add(currentTierCurve);
                 tierIndices.add(curveStep);
 
-                if (rotational_depth % 2 == 0)
+                if (rotationalDepth % 2 == 0)
                 {
-                    rotationsPerTier.add(secondOrderRotations.get((int) curveStep));
+                    rotationsPerTier.add(secondOrderRotations.get(curveStep));
                 }
                 else
                 {
-                    rotationsPerTier.add(secondOrderRotations.get((3 - ((int) curveStep))));
+                    rotationsPerTier.add(secondOrderRotations.get(3 - curveStep));
                 }
 
                 tierDivisor *= 2;
