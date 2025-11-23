@@ -78,22 +78,22 @@ public class Ditherer
 
         int x = 0;
         int y = 0;
-        double hilbertLength = 2;
+        int hilbertLength = 2;
+        int maxOrder = 1;
         int maxSideLength = Math.max(inputImage.getWidth(), inputImage.getHeight());
         // I want the area to encompass the whole image, even if it ends up a bit too large
         while (hilbertLength < maxSideLength)
         {
             hilbertLength *= 2;
+            maxOrder += 1;
         }
-        double stepLimit = hilbertLength * hilbertLength;
+        int stepLimit = hilbertLength * hilbertLength;
 
         int step = 0;
-        double max_order = (Math.log(hilbertLength) / Math.log(2)) - 1;
-
 
         while (step < stepLimit)
         {
-            if (x >= 0 && x < inputImage.getWidth() && y >= 0 && y < inputImage.getHeight())
+            if (x >= 0 && x < outputImage.getWidth() && y >= 0 && y < outputImage.getHeight())
             {
                 BigColor targetColor = new BigColor(pixels[y * inputImage.getWidth() + x]);
                 targetColor.addError(totalErrors);
@@ -103,10 +103,12 @@ public class Ditherer
 
                 totalErrors = targetColor;
                 totalErrors.removeColor(ditherColor);
+
+                // outputImage.setRGB(x, y, step);
             }
 
             ArrayList<ArrayList<Direction>> tiers = new ArrayList<>();
-            ArrayList<Double> tierIndices = new ArrayList<>();
+            ArrayList<Integer> tierIndices = new ArrayList<>();
             ArrayList<Rotation> rotationsPerTier = new ArrayList<>();
             int tierDivisor = 1;
             int hilbertOrder = 0;
@@ -114,14 +116,22 @@ public class Ditherer
             while (tierDivisor < hilbertLength)
             {
                 // TODO: can probably cut the loop short if curveStep is ever equal to 3 because it means that we don't need to calculate any lower orders inside the current order
-                double curveStep;
-                if (hilbertOrder == max_order)
+                // TODO: or we could cache results instead of recalculating them every step
+                int curveStep;
+                if (hilbertOrder == maxOrder)
                 {
-                    curveStep = Math.abs(Math.floor((((step + 1) / (Math.pow(4, 0)))) - 1) % 4);
+                    curveStep = step % 4;
                 }
                 else
                 {
-                    curveStep = Math.abs(Math.floor((((step) / (Math.pow(4, (max_order - hilbertOrder))))) - (4 * hilbertOrder)) % 4);
+                    // curveStep = Math.abs(Math.floor((((step) / (Math.pow(4, (maxOrder - hilbertOrder))))) - (4 * hilbertOrder)) % 4);
+                    // broken curveStep = Math.abs(Math.floor((step / (1 << (2 * (maxOrder - hilbertOrder))) - (4 * hilbertOrder))) % 4);
+
+
+                    // curveStep = (((step / (Math.pow(4, (maxOrder - hilbertOrder))))) - (4 * hilbertOrder)) % 4;
+                    int divisor = (1 << (2 * (maxOrder - hilbertOrder))); // 4 ^ (maxOrder - hilbertOrder)
+                    int quotient = step / divisor;
+                    curveStep = quotient % 4;
                 }
 
                 ArrayList<Direction> currentTierCurve = firstOrderCurve;
