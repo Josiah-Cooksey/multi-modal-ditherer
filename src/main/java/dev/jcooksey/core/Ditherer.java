@@ -87,6 +87,7 @@ public class Ditherer
             hilbertLength *= 2;
             maxOrder += 1;
         }
+        maxOrder -= 1;
         int stepLimit = hilbertLength * hilbertLength;
 
         int step = 0;
@@ -104,7 +105,7 @@ public class Ditherer
                 totalErrors = targetColor;
                 totalErrors.removeColor(ditherColor);
 
-                // outputImage.setRGB(x, y, step);
+                // outputImage.setRGB(x, y, step*255);
             }
 
             ArrayList<ArrayList<Direction>> tiers = new ArrayList<>();
@@ -166,8 +167,9 @@ public class Ditherer
             Direction nextDirection = null;
             for (ArrayList<Direction> tier : tiers.reversed())
             {
-                int tierStep = (int) ((((step + 1) / (Math.pow(4, tierIndex)))) - 1) % 4;
-
+                // tier_step = (int) ((((step + 1) / (pow(4, tier_index)))) - 1) % 4
+                // int tierStep = (((((step + 1) / (1 << (2 * tierIndex)))) - 1) + 4) % 4;
+                int tierStep = tierIndices.reversed().get(tierIndex);
 
                 if (tierStep == 3)
                 {
