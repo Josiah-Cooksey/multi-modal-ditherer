@@ -62,9 +62,12 @@ public class Main
                 g.dispose();
 
                 ArrayList<Color> paletteColors = new ArrayList<>();
-                paletteColors.add(Color.CYAN);
+                /*paletteColors.add(Color.CYAN);
                 paletteColors.add(Color.MAGENTA);
-                paletteColors.add(Color.YELLOW);
+                paletteColors.add(Color.YELLOW);*/
+                paletteColors.add(Color.RED);
+                paletteColors.add(Color.GREEN);
+                paletteColors.add(Color.BLUE);
                 paletteColors.add(Color.BLACK);
                 paletteColors.add(Color.WHITE);
 
