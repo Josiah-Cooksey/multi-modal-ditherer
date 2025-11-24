@@ -9,6 +9,8 @@ import java.util.Map;
 
 public class Ditherer
 {
+    private static final ArrayList<Integer> secondOrderRotations = new ArrayList<>(List.of(-1, 0, 0, 1));
+
     public static ArrayList<Color> palette;
 
     public void setPalette(BufferedImage image)
@@ -63,8 +65,6 @@ public class Ditherer
         int[] pixels = dataBuffer.getData();
         BigColor totalErrors = new BigColor(0, 0, 0);
 
-        ArrayList<Integer> secondOrderRotations = new ArrayList<>(List.of(-1, 0, 0, 1));
-
         int x = 0;
         int y = 0;
         int hilbertLength = 2;
@@ -81,135 +81,149 @@ public class Ditherer
 
         int step = 0;
 
+        ArrayList<ArrayList<Integer>> tiers = new ArrayList<>(List.of(new ArrayList<Integer>(List.of(2, 1, 0))));
+        ArrayList<Integer> tierIndices = new ArrayList<>();
+        ArrayList<Integer> rotationsPerTier = new ArrayList<>();
+
+        ArrayList<Integer> tiersToClear = new ArrayList<>();
         while (step < stepLimit)
         {
-            if (x >= 0 && x < outputImage.getWidth() && y >= 0 && y < outputImage.getHeight())
+            if (tiers.size() < maxOrder)
             {
-                BigColor targetColor = new BigColor(pixels[y * inputImage.getWidth() + x]);
-                targetColor.addError(totalErrors);
-                Color ditherColor = getNearestColor(targetColor);
-
-                outputImage.setRGB(x, y, ditherColor.getRGB());
-
-                totalErrors = targetColor;
-                totalErrors.removeColor(ditherColor);
-            }
-
-            ArrayList<ArrayList<Integer>> tiers = new ArrayList<>();
-            ArrayList<Integer> tierIndices = new ArrayList<>();
-            ArrayList<Integer> rotationsPerTier = new ArrayList<>();
-            int tierDivisor = 1;
-            int hilbertOrder = 0;
-
-            while (tierDivisor < hilbertLength)
-            {
-                // TODO: can probably cut the loop short if curveStep is ever equal to 3 because it means that we don't need to calculate any lower orders inside the current order
-                // TODO: or we could cache results instead of recalculating them every step
-                int curveStep;
-                if (hilbertOrder == maxOrder)
-                {
-                    curveStep = step % 4;
-                }
-                else
-                {
-                    int divisor = (1 << (2 * (maxOrder - hilbertOrder)));
-                    int quotient = step / divisor;
-                    curveStep = quotient % 4;
-                }
-
-                ArrayList<Integer> currentTierCurve = new ArrayList<>(List.of(2, 1, 0));;
-                int rotationalDepth = 0;
-
-                int rotationalIncrement = 0;
-                for (int rotation : rotationsPerTier)
-                {
-                    if (rotation == -1)
-                    {
-                        rotationalIncrement -= 1;
-                        rotationalDepth += 1;
-                    }
-                    else if (rotation == 1)
-                    {
-                        rotationalIncrement += 1;
-                        rotationalDepth += 1;
-                    }
-                }
-                if (rotationalIncrement < 0)
-                {
-                    for(int i = 0; i > rotationalIncrement; i--)
-                    {
-                        rotateDirections90AndReverse(currentTierCurve, -1);
-                    }
-                }
-                else if (rotationalIncrement > 0)
-                {
-                    for(int i = 0; i < rotationalIncrement; i++)
-                    {
-                        rotateDirections90AndReverse(currentTierCurve, 1);
-                    }
-                }
-
-                tiers.add(currentTierCurve);
-                tierIndices.add(curveStep);
-
-                if (rotationalDepth % 2 == 0)
-                {
-                    rotationsPerTier.add(secondOrderRotations.get(curveStep));
-                }
-                else
-                {
-                    rotationsPerTier.add(secondOrderRotations.get(3 - curveStep));
-                }
-
-                tierDivisor *= 2;
-                hilbertOrder += 1;
+                processNewCurves(tiers, tierIndices, rotationsPerTier, hilbertLength, maxOrder, step);
             }
 
             int tierIndex = 0;
-            Integer nextDirection = null;
+
+            boolean completedTier = false;
             for (ArrayList<Integer> tier : tiers.reversed())
             {
                 int tierStep = tierIndices.reversed().get(tierIndex);
 
                 if (tierStep == 3)
                 {
+                    completedTier = true;
+                    tiersToClear.add(tierIndex);
                     tierIndex += 1;
                     continue;
                 }
 
-                nextDirection = tier.get(tierStep);
-                break;
+                // because we're progressing through multiple precalculated steps in this loop, we have to manually increment tierSteps
+                // otherwise they perpetually remain at 0
+                tierIndices.reversed().set(tierIndex, tierStep + 1);
+
+                switch (tier.get(tierStep))
+                {
+                    case 0:
+                        y -= 1;
+                        break;
+
+                    case 2:
+                        y += 1;
+                        break;
+
+                    case 3:
+                        x -= 1;
+                        break;
+
+                    case 1:
+                        x += 1;
+                        break;
+                }
+
+                if (x >= 0 && x < outputImage.getWidth() && y >= 0 && y < outputImage.getHeight())
+                {
+                    BigColor targetColor = new BigColor(pixels[y * inputImage.getWidth() + x]);
+                    targetColor.addError(totalErrors);
+                    Color ditherColor = getNearestColor(targetColor);
+
+                    outputImage.setRGB(x, y, ditherColor.getRGB());
+
+                    totalErrors = targetColor;
+                    totalErrors.removeColor(ditherColor);
+                }
+                step += 1;
+
+                if (completedTier)
+                {
+                    break;
+                }
             }
 
-            if (nextDirection == null)
+            for (int i = 0; i < tiersToClear.size(); i++)
             {
-                System.out.println("The next direction could not be determined on step " + step);
-                return outputImage;
+                tiersToClear.removeLast();
+                tierIndices.removeLast();
+                tiers.removeLast();
+                try
+                {
+                    rotationsPerTier.removeLast();
+                }
+                catch (Exception e) {}
             }
-
-            switch (nextDirection)
-            {
-                case 0:
-                    y -= 1;
-                    break;
-
-                case 2:
-                    y += 1;
-                    break;
-
-                case 3:
-                    x -= 1;
-                    break;
-
-                case 1:
-                    x += 1;
-                    break;
-            }
-
-            step += 1;
         }
 
         return outputImage;
+    }
+
+    private void processNewCurves(ArrayList<ArrayList<Integer>> tiers, ArrayList<Integer> tierIndices, ArrayList<Integer> rotationsPerTier, int hilbertLength, int maxOrder, int step)
+    {
+        int hilbertOrder = tiers.size() - 1;
+        int rotationalDepth = 0;
+        for (int rotation:  rotationsPerTier)
+        {
+            if (rotation == -1 || rotation == 1)
+            {
+                rotationalDepth += 1;
+            }
+        }
+        if (rotationsPerTier.isEmpty())
+        {
+            int quotient = step / (1 << (2 * (maxOrder - hilbertOrder)));
+            int curveStep = quotient % 4;
+            rotationsPerTier.add(secondOrderRotations.get(curveStep));
+            tierIndices.add(curveStep);
+            hilbertOrder += 1;
+        }
+
+        while (hilbertOrder <= maxOrder)
+        {
+            int curveStep;
+            if (hilbertOrder == maxOrder)
+            {
+                curveStep = step % 4;
+            } else
+            {
+                int divisor = (1 << (2 * (maxOrder - hilbertOrder)));
+                int quotient = step / divisor;
+                curveStep = quotient % 4;
+            }
+
+            // we get the curve from the last tier because we then only need to apply one rotation at most to get the real tier curve
+            ArrayList<Integer> currentTierCurve = new ArrayList<>(tiers.get(hilbertOrder - 1));
+            int nextRotation = rotationsPerTier.getLast();
+            if (nextRotation == 1 || nextRotation == -1)
+            {
+                rotateDirections90AndReverse(currentTierCurve, nextRotation);
+                rotationalDepth += 1;
+            }
+
+            if (hilbertOrder + 1 <= maxOrder)
+            {
+                if (rotationalDepth % 2 == 0)
+                {
+                    rotationsPerTier.add(secondOrderRotations.get(curveStep));
+                } else
+                {
+                    rotationsPerTier.add(secondOrderRotations.get(3 - curveStep));
+                }
+            }
+
+            tiers.add(currentTierCurve);
+            tierIndices.add(curveStep);
+
+            hilbertOrder += 1;
+        }
     }
 
     private void rotateDirections90AndReverse(ArrayList<Integer> directions, int rotation)
