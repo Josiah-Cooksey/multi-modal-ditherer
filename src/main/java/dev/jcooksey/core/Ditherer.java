@@ -82,7 +82,7 @@ public class Ditherer
         int step = 0;
 
         ArrayList<ArrayList<Integer>> tiers = new ArrayList<>(List.of(new ArrayList<Integer>(List.of(2, 1, 0))));
-        ArrayList<Integer> tierIndices = new ArrayList<>();
+        ArrayList<Integer> tierIndices = new ArrayList<>(List.of(0));
         ArrayList<Integer> rotationsPerTier = new ArrayList<>();
 
         while (step < stepLimit)
@@ -116,12 +116,13 @@ public class Ditherer
                 {
                     tiersToClear += 1;
                     tierIndex += 1;
-                    if (tierIndex >= tiers.size())
+                    if (tiersToClear >= tiers.size())
                     {
                         return outputImage;
                     }
                     continue;
                 }
+                tierIndices.reversed().set(tierIndex, tierStep + 1);
                 int[] updatedCoords = drawHilbertPixel(tier.get(tierStep), x, y, outputImage, pixels, inputImage, totalErrors);
                 x = updatedCoords[0];
                 y = updatedCoords[1];
@@ -136,8 +137,7 @@ public class Ditherer
                 try
                 {
                     rotationsPerTier.removeLast();
-                }
-                catch (Exception e) {}
+                } catch (Exception e) {}
             }
         }
 
@@ -150,18 +150,22 @@ public class Ditherer
         {
             case 0:
                 y -= 1;
+                System.out.println("up");
                 break;
 
             case 2:
                 y += 1;
+                System.out.println("down");
                 break;
 
             case 3:
                 x -= 1;
+                System.out.println("left");
                 break;
 
             case 1:
                 x += 1;
+                System.out.println("right");
                 break;
         }
 
@@ -181,7 +185,7 @@ public class Ditherer
 
     private void processNewCurves(ArrayList<ArrayList<Integer>> tiers, ArrayList<Integer> tierIndices, ArrayList<Integer> rotationsPerTier, int maxOrder, int step)
     {
-        int hilbertOrder = tiers.size();
+        int hilbertOrder = rotationsPerTier.size();
         int rotationalDepth = 0;
         for (int rotation:  rotationsPerTier)
         {
@@ -190,16 +194,18 @@ public class Ditherer
                 rotationalDepth += 1;
             }
         }
-        if (rotationsPerTier.isEmpty())
+
+        // we always need to add at least one rotation because each four steps there's a new rotation
+        if (rotationalDepth % 2 == 0)
         {
-            int quotient = step / (1 << (2 * (maxOrder - hilbertOrder)));
-            int curveStep = quotient % 4;
-            rotationsPerTier.add(secondOrderRotations.get(curveStep));
-            tierIndices.add(curveStep);
-            hilbertOrder += 1;
+            rotationsPerTier.add(secondOrderRotations.get(tierIndices.getLast()));
+        } else
+        {
+            rotationsPerTier.add(secondOrderRotations.get(3 - tierIndices.getLast()));
         }
 
-        while (hilbertOrder <= maxOrder)
+
+        while (hilbertOrder < maxOrder)
         {
             int curveStep;
             if (hilbertOrder == maxOrder)
@@ -214,7 +220,7 @@ public class Ditherer
             }
 
             // we get the curve from the last tier because we then only need to apply one rotation at most to get the real tier curve
-            ArrayList<Integer> currentTierCurve = new ArrayList<>(tiers.get(hilbertOrder - 1));
+            ArrayList<Integer> currentTierCurve = new ArrayList<>(tiers.getLast());
             int nextRotation = rotationsPerTier.getLast();
             if (nextRotation == 1 || nextRotation == -1)
             {
@@ -222,7 +228,9 @@ public class Ditherer
                 rotationalDepth += 1;
             }
 
-            if (hilbertOrder + 1 <= maxOrder)
+            // because rotationsPerTier will have tiers.size() - 1 elements and each rotation is to go from one order to the next
+            // that means that we don't need the last rotation to be added because we don't need to rotate the final curve into yet another higher-order curve
+            if (hilbertOrder < maxOrder - 1)
             {
                 if (rotationalDepth % 2 == 0)
                 {
