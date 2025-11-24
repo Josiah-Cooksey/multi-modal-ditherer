@@ -85,74 +85,52 @@ public class Ditherer
         ArrayList<Integer> tierIndices = new ArrayList<>();
         ArrayList<Integer> rotationsPerTier = new ArrayList<>();
 
-        ArrayList<Integer> tiersToClear = new ArrayList<>();
         while (step < stepLimit)
         {
-            if (tiers.size() < maxOrder)
-            {
-                processNewCurves(tiers, tierIndices, rotationsPerTier, hilbertLength, maxOrder, step);
-            }
+            processNewCurves(tiers, tierIndices, rotationsPerTier, maxOrder, step);
+
+            // we always draw 4 pixels at a time — 3 from the deepest (highest-order) curve and one from the next-deepest curve that isn't on step 3
 
             int tierIndex = 0;
-
-            boolean completedTier = false;
-            for (ArrayList<Integer> tier : tiers.reversed())
+            // starts at one because we always need to remove the highest-order curve
+            int tiersToClear = 1;
+            for (int tierStep = 0; tierStep < 3; tierStep++)
             {
+                int[] updatedCoords = drawHilbertPixel(tiers.getLast().get(tierStep), x, y, outputImage, pixels, inputImage, totalErrors);
+                x = updatedCoords[0];
+                y = updatedCoords[1];
+                // because we're progressing through multiple precalculated steps in this loop, we have to manually increment tierSteps
+                // otherwise they perpetually remain at 0
+                tierIndices.reversed().set(tierIndex, tierStep + 1);
+                step += 1;
+            }
+
+            tierIndex = 1;
+            ArrayList<Integer> tier;
+            while (true)
+            {
+                tier = tiers.reversed().get(tierIndex);
                 int tierStep = tierIndices.reversed().get(tierIndex);
 
                 if (tierStep == 3)
                 {
-                    completedTier = true;
-                    tiersToClear.add(tierIndex);
+                    tiersToClear += 1;
                     tierIndex += 1;
+                    if (tierIndex >= tiers.size())
+                    {
+                        return outputImage;
+                    }
                     continue;
                 }
-
-                // because we're progressing through multiple precalculated steps in this loop, we have to manually increment tierSteps
-                // otherwise they perpetually remain at 0
-                tierIndices.reversed().set(tierIndex, tierStep + 1);
-
-                switch (tier.get(tierStep))
-                {
-                    case 0:
-                        y -= 1;
-                        break;
-
-                    case 2:
-                        y += 1;
-                        break;
-
-                    case 3:
-                        x -= 1;
-                        break;
-
-                    case 1:
-                        x += 1;
-                        break;
-                }
-
-                if (x >= 0 && x < outputImage.getWidth() && y >= 0 && y < outputImage.getHeight())
-                {
-                    BigColor targetColor = new BigColor(pixels[y * inputImage.getWidth() + x]);
-                    targetColor.addError(totalErrors);
-                    Color ditherColor = getNearestColor(targetColor);
-
-                    outputImage.setRGB(x, y, ditherColor.getRGB());
-
-                    totalErrors = targetColor;
-                    totalErrors.removeColor(ditherColor);
-                }
-                step += 1;
-
-                if (completedTier)
-                {
-                    break;
-                }
+                int[] updatedCoords = drawHilbertPixel(tier.get(tierStep), x, y, outputImage, pixels, inputImage, totalErrors);
+                x = updatedCoords[0];
+                y = updatedCoords[1];
+                break;
             }
+            step += 1;
 
-            for (int i = 0; i < tiersToClear.size(); i++)
+            for (int i = 0; i < tiersToClear; i++)
             {
-                tiersToClear.removeLast();
                 tierIndices.removeLast();
                 tiers.removeLast();
                 try
@@ -166,9 +144,44 @@ public class Ditherer
         return outputImage;
     }
 
-    private void processNewCurves(ArrayList<ArrayList<Integer>> tiers, ArrayList<Integer> tierIndices, ArrayList<Integer> rotationsPerTier, int hilbertLength, int maxOrder, int step)
+    private int[] drawHilbertPixel(int direction, int x, int y, BufferedImage outputImage, int[] pixels, BufferedImage inputImage, BigColor totalErrors)
     {
-        int hilbertOrder = tiers.size() - 1;
+        switch (direction)
+        {
+            case 0:
+                y -= 1;
+                break;
+
+            case 2:
+                y += 1;
+                break;
+
+            case 3:
+                x -= 1;
+                break;
+
+            case 1:
+                x += 1;
+                break;
+        }
+
+        if (x >= 0 && x < outputImage.getWidth() && y >= 0 && y < outputImage.getHeight())
+        {
+            BigColor targetColor = new BigColor(pixels[y * inputImage.getWidth() + x]);
+            targetColor.addError(totalErrors);
+            Color ditherColor = getNearestColor(targetColor);
+
+            outputImage.setRGB(x, y, ditherColor.getRGB());
+
+            totalErrors = targetColor;
+            totalErrors.removeColor(ditherColor);
+        }
+        return new int[]{x, y};
+    }
+
+    private void processNewCurves(ArrayList<ArrayList<Integer>> tiers, ArrayList<Integer> tierIndices, ArrayList<Integer> rotationsPerTier, int maxOrder, int step)
+    {
+        int hilbertOrder = tiers.size();
         int rotationalDepth = 0;
         for (int rotation:  rotationsPerTier)
         {
@@ -192,7 +205,8 @@ public class Ditherer
             if (hilbertOrder == maxOrder)
             {
                 curveStep = step % 4;
-            } else
+            }
+            else
             {
                 int divisor = (1 << (2 * (maxOrder - hilbertOrder)));
                 int quotient = step / divisor;
