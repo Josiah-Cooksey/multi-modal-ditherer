@@ -58,7 +58,6 @@ public class Ditherer
         return outputImage;
     }
 
-    // TODO: use an inverted index for ArrayLists instead of .reversed to improve performance
     // simpleDither, but follows a hilbert curve instead of left-to-right, top-to-bottom pathing
     public BufferedImage hilbertDither(BufferedImage inputImage)
     {
@@ -83,7 +82,7 @@ public class Ditherer
 
         int step = 0;
 
-        ArrayList<ArrayList<Integer>> tiers = new ArrayList<>(List.of(new ArrayList<Integer>(List.of(2, 1, 0))));
+        ArrayList<ArrayList<Integer>> tiers = new ArrayList<>(List.of(new ArrayList<>(List.of(2, 1, 0))));
         ArrayList<Integer> tierIndices = new ArrayList<>(List.of(0));
         ArrayList<Integer> rotationsPerTier = new ArrayList<>();
 
@@ -101,7 +100,7 @@ public class Ditherer
                 y = updatedCoords[1];
                 // because we're progressing through multiple precalculated steps in this loop, we have to manually increment tierSteps
                 // otherwise they perpetually remain at 0
-                tierIndices.reversed().set(tierIndex, tierStep + 1);
+                tierIndices.set((tierIndices.size() - 1) - tierIndex, tierStep + 1);
                 step += 1;
             }
             // after those 3 prior steps, we can always safely remove that highest-order curve data
@@ -110,23 +109,20 @@ public class Ditherer
             rotationsPerTier.removeLast();
 
             tierIndex = 1;
-            ArrayList<Integer> tier;
-            int completedTiers = 1;
             while (!tiers.isEmpty())
             {
                 int tierStep = tierIndices.getLast();
 
                 if (tierStep == 3)
                 {
-                    completedTiers += 1;
                     tierIndex += 1;
 
                     tiers.removeLast();
                     tierIndices.removeLast();
-                    try
+                    if (!rotationsPerTier.isEmpty())
                     {
                         rotationsPerTier.removeLast();
-                    } catch (Exception e) {}
+                    }
 
                     if (tiers.isEmpty())
                     {
@@ -141,21 +137,6 @@ public class Ditherer
                 // we need to keep track of tier progress because we may not remove it this loop iteration
                 tierStep += 1;
                 tierIndices.set(tierIndices.size() - 1, tierStep);
-
-                /*if (tierStep == 3)
-                {
-                    tiers.removeLast();
-                    tierIndices.removeLast();
-                    try
-                    {
-                        rotationsPerTier.removeLast();
-                    } catch (Exception e) {}
-
-                    if (tiers.isEmpty())
-                    {
-                        return outputImage;
-                    }
-                }*/
                 break;
             }
             step += 1;
@@ -213,8 +194,6 @@ public class Ditherer
             }
         }
 
-        int startingOrder = hilbertOrder;
-
         int indexGenerationCounter = hilbertOrder + 1;
         while (tierIndices.size() < maxOrder)
         {
@@ -269,7 +248,6 @@ public class Ditherer
 
             hilbertOrder += 1;
         }
-        return;
     }
 
     private void rotateDirections90AndReverse(ArrayList<Integer> directions, int rotation)
