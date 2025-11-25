@@ -58,6 +58,8 @@ public class Main
                     BufferedImage.TYPE_INT_RGB
                 );
                 Graphics2D g = inputImage.createGraphics();
+                g.setColor(Color.WHITE);
+                g.fillRect(0, 0, inputImage.getWidth(), inputImage.getHeight());
                 g.drawImage(src, 0, 0, null);
                 g.dispose();
 
