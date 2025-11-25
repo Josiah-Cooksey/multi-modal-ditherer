@@ -57,6 +57,7 @@ public class Ditherer
         return outputImage;
     }
 
+    // TODO: use an inverted index for ArrayLists instead of .reversed to improve performance
     // simpleDither, but follows a hilbert curve instead of left-to-right, top-to-bottom pathing
     public BufferedImage hilbertDither(BufferedImage inputImage)
     {
@@ -92,8 +93,6 @@ public class Ditherer
             // we always draw 4 pixels at a time — 3 from the deepest (highest-order) curve and one from the next-deepest curve that isn't on step 3
 
             int tierIndex = 0;
-            // starts at one because we always need to remove the highest-order curve
-            int tiersToClear = 1;
             for (int tierStep = 0; tierStep < 3; tierStep++)
             {
                 int[] updatedCoords = drawHilbertPixel(tiers.getLast().get(tierStep), x, y, outputImage, pixels, inputImage, totalErrors);
@@ -104,45 +103,61 @@ public class Ditherer
                 tierIndices.reversed().set(tierIndex, tierStep + 1);
                 step += 1;
             }
+            // after those 3 prior steps, we can always safely remove that highest-order curve data
+            tiers.removeLast();
+            tierIndices.removeLast();
+            rotationsPerTier.removeLast();
 
             tierIndex = 1;
             ArrayList<Integer> tier;
-            while (true)
+            int completedTiers = 1;
+            while (!tiers.isEmpty())
             {
-                tier = tiers.reversed().get(tierIndex);
-                int tierStep = tierIndices.reversed().get(tierIndex);
+                int tierStep = tierIndices.getLast();
 
                 if (tierStep == 3)
                 {
-                    tiersToClear += 1;
+                    completedTiers += 1;
                     tierIndex += 1;
-                    if (tiersToClear >= tiers.size())
+
+                    tiers.removeLast();
+                    tierIndices.removeLast();
+                    try
+                    {
+                        rotationsPerTier.removeLast();
+                    } catch (Exception e) {}
+
+                    if (tiers.isEmpty())
                     {
                         return outputImage;
                     }
                     continue;
                 }
-                /*tierIndices.reversed().set(tierIndex, tierStep + 1);
-                if (tierStep == 2)
-                {
-                    tiersToClear += 1;
-                }*/
-                int[] updatedCoords = drawHilbertPixel(tier.get(tierStep), x, y, outputImage, pixels, inputImage, totalErrors);
+                int[] updatedCoords = drawHilbertPixel(tiers.getLast().get(tierStep), x, y, outputImage, pixels, inputImage, totalErrors);
                 x = updatedCoords[0];
                 y = updatedCoords[1];
+
+                // we need to keep track of tier progress because we may not remove it this loop iteration
+                tierStep += 1;
+                tierIndices.set(tierIndices.size() - 1, tierStep);
+
+                if (tierStep == 3)
+                {
+                    tiers.removeLast();
+                    tierIndices.removeLast();
+                    try
+                    {
+                        rotationsPerTier.removeLast();
+                    } catch (Exception e) {}
+
+                    if (tiers.isEmpty())
+                    {
+                        return outputImage;
+                    }
+                }
                 break;
             }
             step += 1;
-
-            /for (int i = 0; i < tiersToClear; i++)
-            {
-                tierIndices.removeLast();
-                tiers.removeLast();
-                try
-                {
-                    rotationsPerTier.removeLast();
-                } catch (Exception e) {}
-            }
         }
 
         return outputImage;
@@ -189,6 +204,10 @@ public class Ditherer
 
     private void processNewCurves(ArrayList<ArrayList<Integer>> tiers, ArrayList<Integer> tierIndices, ArrayList<Integer> rotationsPerTier, int maxOrder, int step)
     {
+        for (int orderIndex = 0; orderIndex < rotationsPerTier.size(); orderIndex++)
+        {
+
+        }
         int hilbertOrder = rotationsPerTier.size();
         int rotationalDepth = 0;
         for (int rotation:  rotationsPerTier)
