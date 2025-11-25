@@ -37,6 +37,13 @@ public class BigColor
         setBlue(color.getBlue() + this.blue);
     }
 
+    public void setColor(BigColor color)
+    {
+        setRed(color.getRed());
+        setGreen(color.getGreen());
+        setBlue(color.getBlue());
+    }
+
     public int getRed()
     {
         return red;
