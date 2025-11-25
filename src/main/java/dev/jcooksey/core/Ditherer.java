@@ -6,6 +6,7 @@ import java.awt.image.DataBufferInt;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 public class Ditherer
 {
@@ -141,7 +142,7 @@ public class Ditherer
                 tierStep += 1;
                 tierIndices.set(tierIndices.size() - 1, tierStep);
 
-                if (tierStep == 3)
+                /*if (tierStep == 3)
                 {
                     tiers.removeLast();
                     tierIndices.removeLast();
@@ -154,7 +155,7 @@ public class Ditherer
                     {
                         return outputImage;
                     }
-                }
+                }*/
                 break;
             }
             step += 1;
@@ -204,10 +205,6 @@ public class Ditherer
 
     private void processNewCurves(ArrayList<ArrayList<Integer>> tiers, ArrayList<Integer> tierIndices, ArrayList<Integer> rotationsPerTier, int maxOrder, int step)
     {
-        for (int orderIndex = 0; orderIndex < rotationsPerTier.size(); orderIndex++)
-        {
-
-        }
         int hilbertOrder = rotationsPerTier.size();
         int rotationalDepth = 0;
         for (int rotation:  rotationsPerTier)
@@ -218,57 +215,61 @@ public class Ditherer
             }
         }
 
-        // we always need to add at least one rotation because each four steps there's a new rotation
-        if (rotationalDepth % 2 == 0)
+        /*if (rotationalDepth % 2 == 0)
         {
             rotationsPerTier.add(secondOrderRotations.get(tierIndices.getLast()));
-        } else
+        }
+        else
         {
             rotationsPerTier.add(secondOrderRotations.get(3 - tierIndices.getLast()));
-        }
+        }*/
 
         int startingOrder = hilbertOrder;
-
-        while (hilbertOrder < maxOrder)
+        while (tiers.size() <= maxOrder)
         {
             int curveStep;
             int divisor = (1 << (2 * (maxOrder - hilbertOrder)));
             int quotient = step / divisor;
             curveStep = quotient % 4;
 
-            // we get the curve from the last tier because we then only need to apply one rotation at most to get the real tier curve
-            ArrayList<Integer> currentTierCurve = new ArrayList<>(tiers.getLast());
-            int nextRotation = rotationsPerTier.getLast();
-            if (nextRotation == 1 || nextRotation == -1)
+            // because we update the tier index for tiers that we don't remove, we only need to add an updated tier index if the tier we're on doesn't already have one saved
+            if (hilbertOrder != startingOrder && hilbertOrder != maxOrder)
             {
-                rotateDirections90AndReverse(currentTierCurve, nextRotation);
-                rotationalDepth += 1;
+                tierIndices.add(curveStep);
             }
 
-            // because rotationsPerTier will have tiers.size() - 1 elements and each rotation is to go from one order to the next
-            // that means that we don't need the last rotation to be added because we don't need to rotate the final curve into yet another higher-order curve
-            if (hilbertOrder < maxOrder - 1)
+            // we copy the curve from the last tier because we then only need to apply one rotation at most to get the real tier curve
+            ArrayList<Integer> currentTierCurve = new ArrayList<>(tiers.getLast());
+            try
+            {
+                int nextRotation = rotationsPerTier.getLast();
+                if (nextRotation == 1 || nextRotation == -1)
+                {
+                    rotateDirections90AndReverse(currentTierCurve, nextRotation);
+                    rotationalDepth += 1;
+                }
+            } catch (NoSuchElementException ignored) { }
+            if (hilbertOrder != 0 && tiers.size() <= maxOrder)
+            {
+                tiers.add(currentTierCurve);
+            }
+
+            // the only reason to add to rotationsPerTier is if we need to rotate into a higher-order hilbert curve
+            // so we can exclude the last curve because we don't need anything deeper
+            if (hilbertOrder != maxOrder)
             {
                 if (rotationalDepth % 2 == 0)
                 {
                     rotationsPerTier.add(secondOrderRotations.get(curveStep));
-                } else
+                }
+                else
                 {
                     rotationsPerTier.add(secondOrderRotations.get(3 - curveStep));
                 }
             }
 
-            tiers.add(currentTierCurve);
-
-            // because we update the tier index for tiers that we don't remove, we only need to add an updated tier index if the tier we're on doesn't already have one saved
-            if (hilbertOrder != startingOrder)
-            {
-                tierIndices.add(curveStep);
-            }
-
             hilbertOrder += 1;
         }
-        // because the improved logic draws pixels in groups of four, when we're done processing the last tier, it is always on the first index (0) of that highest-order curve
         tierIndices.add(0);
         return;
     }
