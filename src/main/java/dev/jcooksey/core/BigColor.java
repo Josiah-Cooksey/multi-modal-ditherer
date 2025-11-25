@@ -99,5 +99,31 @@ public class BigColor
         this.red += totalErrors.getRed();
         this.green += totalErrors.getGreen();
         this.blue += totalErrors.getBlue();
+
+        // clamping for better dithering appearance
+        if (this.red > 255)
+        {
+            this.red = 255;
+        }
+        /*else if (this.red < 0)
+        {
+            this.red = 0;
+        }*/
+        if (this.green > 255)
+        {
+            this.green = 255;
+        }
+        /*else if (this.green < 0)
+        {
+            this.green = 0;
+        }*/
+        if (this.blue > 255)
+        {
+            this.blue = 255;
+        }
+        /*else if (this.blue < 0)
+        {
+            this.blue = 0;
+        }*/
     }
 }
