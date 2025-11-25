@@ -122,7 +122,11 @@ public class Ditherer
                     }
                     continue;
                 }
-                tierIndices.reversed().set(tierIndex, tierStep + 1);
+                /*tierIndices.reversed().set(tierIndex, tierStep + 1);
+                if (tierStep == 2)
+                {
+                    tiersToClear += 1;
+                }*/
                 int[] updatedCoords = drawHilbertPixel(tier.get(tierStep), x, y, outputImage, pixels, inputImage, totalErrors);
                 x = updatedCoords[0];
                 y = updatedCoords[1];
@@ -130,7 +134,7 @@ public class Ditherer
             }
             step += 1;
 
-            for (int i = 0; i < tiersToClear; i++)
+            /for (int i = 0; i < tiersToClear; i++)
             {
                 tierIndices.removeLast();
                 tiers.removeLast();
@@ -204,20 +208,14 @@ public class Ditherer
             rotationsPerTier.add(secondOrderRotations.get(3 - tierIndices.getLast()));
         }
 
+        int startingOrder = hilbertOrder;
 
         while (hilbertOrder < maxOrder)
         {
             int curveStep;
-            if (hilbertOrder == maxOrder)
-            {
-                curveStep = step % 4;
-            }
-            else
-            {
-                int divisor = (1 << (2 * (maxOrder - hilbertOrder)));
-                int quotient = step / divisor;
-                curveStep = quotient % 4;
-            }
+            int divisor = (1 << (2 * (maxOrder - hilbertOrder)));
+            int quotient = step / divisor;
+            curveStep = quotient % 4;
 
             // we get the curve from the last tier because we then only need to apply one rotation at most to get the real tier curve
             ArrayList<Integer> currentTierCurve = new ArrayList<>(tiers.getLast());
@@ -242,10 +240,18 @@ public class Ditherer
             }
 
             tiers.add(currentTierCurve);
-            tierIndices.add(curveStep);
+
+            // because we update the tier index for tiers that we don't remove, we only need to add an updated tier index if the tier we're on doesn't already have one saved
+            if (hilbertOrder != startingOrder)
+            {
+                tierIndices.add(curveStep);
+            }
 
             hilbertOrder += 1;
         }
+        // because the improved logic draws pixels in groups of four, when we're done processing the last tier, it is always on the first index (0) of that highest-order curve
+        tierIndices.add(0);
+        return;
     }
 
     private void rotateDirections90AndReverse(ArrayList<Integer> directions, int rotation)
