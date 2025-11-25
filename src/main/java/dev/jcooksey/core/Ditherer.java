@@ -170,22 +170,18 @@ public class Ditherer
         {
             case 0:
                 y -= 1;
-                System.out.println("up");
                 break;
 
             case 2:
                 y += 1;
-                System.out.println("down");
                 break;
 
             case 3:
                 x -= 1;
-                System.out.println("left");
                 break;
 
             case 1:
                 x += 1;
-                System.out.println("right");
                 break;
         }
 
