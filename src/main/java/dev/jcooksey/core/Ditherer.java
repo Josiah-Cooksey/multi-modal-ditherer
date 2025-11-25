@@ -197,7 +197,7 @@ public class Ditherer
 
             outputImage.setRGB(x, y, ditherColor.getRGB());
 
-            totalErrors = targetColor;
+            totalErrors.setColor(targetColor);
             totalErrors.removeColor(ditherColor);
         }
         return new int[]{x, y};
@@ -206,7 +206,7 @@ public class Ditherer
     private void processNewCurves(ArrayList<ArrayList<Integer>> tiers, ArrayList<Integer> tierIndices, ArrayList<Integer> rotationsPerTier, int maxOrder, int step)
     {
         // the problem is that if this starts on tiers.size() - 1, then when the first order curve is on step index 1, it duplicates the rotations for some reason, so we end up with two up "rotations" instead of just one
-        int hilbertOrder = tiers.size();
+        int hilbertOrder = tiers.size() - 1;
         int rotationalDepth = 0;
 
         for (int rotation:  rotationsPerTier)
@@ -215,15 +215,6 @@ public class Ditherer
             {
                 rotationalDepth += 1;
             }
-        }
-
-        if (rotationalDepth % 2 == 0)
-        {
-            rotationsPerTier.add(secondOrderRotations.get(tierIndices.getLast()));
-        }
-        else
-        {
-            rotationsPerTier.add(secondOrderRotations.get(3 - tierIndices.getLast()));
         }
 
         int startingOrder = hilbertOrder;
@@ -245,6 +236,25 @@ public class Ditherer
         }
         tierIndices.add(0);
 
+        int rotationGenerationCounter = hilbertOrder;
+        while (rotationsPerTier.size() < maxOrder)
+        {
+            if (rotationalDepth % 2 == 0)
+            {
+                rotationsPerTier.add(secondOrderRotations.get(tierIndices.get(rotationGenerationCounter)));
+            }
+            else
+            {
+                rotationsPerTier.add(secondOrderRotations.get(3 - tierIndices.get(rotationGenerationCounter)));
+            }
+
+            if (rotationsPerTier.getLast() == -1 || rotationsPerTier.getLast() == 1)
+            {
+                rotationalDepth += 1;
+            }
+            rotationGenerationCounter += 1;
+        }
+
         while (hilbertOrder < maxOrder)
         {
             // we copy the curve from the last tier because we then only need to apply one rotation at most to get the real tier curve
@@ -252,7 +262,7 @@ public class Ditherer
 
             try
             {
-                int nextRotation = rotationsPerTier.getLast();
+                int nextRotation = rotationsPerTier.get(hilbertOrder);
                 if (nextRotation == 1 || nextRotation == -1)
                 {
                     rotateDirections90AndReverse(currentTierCurve, nextRotation);
@@ -260,19 +270,6 @@ public class Ditherer
                 }
             } catch (NoSuchElementException ignored) { }
             tiers.add(currentTierCurve);
-
-            // the only reason to add to rotationsPerTier is if we need to rotate into a higher-order hilbert curve
-            // so we can exclude the last curve because we don't need anything deeper
-            if (hilbertOrder < maxOrder - 1)
-            {
-                if (rotationalDepth % 2 == 0)
-                {
-                    rotationsPerTier.add(secondOrderRotations.get(tierIndices.get(hilbertOrder)));
-                } else
-                {
-                    rotationsPerTier.add(secondOrderRotations.get(3 - tierIndices.get(hilbertOrder)));
-                }
-            }
 
             hilbertOrder += 1;
         }
