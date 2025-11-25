@@ -41,6 +41,22 @@ public class Main
             return;
         }
 
+
+        ArrayList<Color> paletteColors = new ArrayList<>();
+        paletteColors.add(getRandomColor());
+        paletteColors.add(getRandomColor());
+        paletteColors.add(getRandomColor());
+        paletteColors.add(getRandomColor());
+        paletteColors.add(getRandomColor());
+        paletteColors.add(getRandomColor());
+        /*paletteColors.add(Color.CYAN);
+        paletteColors.add(Color.MAGENTA);
+        paletteColors.add(Color.YELLOW);
+        paletteColors.add(Color.RED);
+        paletteColors.add(Color.GREEN);
+        paletteColors.add(Color.BLUE);
+        paletteColors.add(Color.BLACK);
+        paletteColors.add(Color.WHITE);*/
         for (int i = 0; i < inputFiles.length; i++)
         {
             // for now, I'm only supporting PNG and JPEG images
@@ -63,16 +79,6 @@ public class Main
                 g.drawImage(src, 0, 0, null);
                 g.dispose();
 
-                ArrayList<Color> paletteColors = new ArrayList<>();
-                /*paletteColors.add(Color.CYAN);
-                paletteColors.add(Color.MAGENTA);
-                paletteColors.add(Color.YELLOW);*/
-                paletteColors.add(Color.RED);
-                paletteColors.add(Color.GREEN);
-                paletteColors.add(Color.BLUE);
-                paletteColors.add(Color.BLACK);
-                paletteColors.add(Color.WHITE);
-
                 Ditherer ditherer = new Ditherer();
                 ditherer.setPalette(paletteColors);
                 BufferedImage outputImage = ditherer.hilbertDither(inputImage);
@@ -87,5 +93,10 @@ public class Main
             }
         }
 
+    }
+
+    public static Color getRandomColor()
+    {
+        return new Color((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255));
     }
 }
