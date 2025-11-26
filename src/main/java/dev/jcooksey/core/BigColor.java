@@ -81,38 +81,42 @@ public class BigColor
 
     public double getColorDistance(Color color)
     {
-
-        // clamping for better dithering appearance
-        if (this.red > 255)
-        {
-            this.red = 255;
-        }
-        else if (this.red < 0)
-        {
-            this.red = 0;
-        }
-        if (this.green > 255)
-        {
-            this.green = 255;
-        }
-        else if (this.green < 0)
-        {
-            this.green = 0;
-        }
-        if (this.blue > 255)
-        {
-            this.blue = 255;
-        }
-        else if (this.blue < 0)
-        {
-            this.blue = 0;
-        }
         int redDistance = Math.abs(this.red - color.getRed());
         int greenDistance = Math.abs(this.green - color.getGreen());
         int blueDistance = Math.abs(this.blue - color.getBlue());
 
-        // double firstHypotenuse = Math.sqrt(Math.pow(redDistance, 2) + Math.pow(greenDistance, 2));
         return Math.sqrt(Math.pow(redDistance, 2) + Math.pow(greenDistance, 2) + Math.pow(blueDistance, 2));
+    }
+
+    public void clampColor()
+    {
+        // clamping for better dithering appearance
+        if (this.red > 255)
+        {
+            this.red = 255 + ((this.red - 255) / 2);
+        }
+        else if (this.red < 0)
+        {
+            this.red = this.red / 2;
+        }
+
+        if (this.green > 255)
+        {
+            this.green = 255 + ((this.green - 255) / 2);
+        }
+        else if (this.green < 0)
+        {
+            this.green = this.green / 2;
+        }
+
+        if (this.blue > 255)
+        {
+            this.blue = 255 + ((this.blue - 255) / 2);
+        }
+        else if (this.blue < 0)
+        {
+            this.blue = this.blue / 2;
+        }
     }
 
     public Color getBoundedColor()
