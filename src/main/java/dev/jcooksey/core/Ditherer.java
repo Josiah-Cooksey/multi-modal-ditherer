@@ -98,6 +98,12 @@ public class Ditherer
                 int[] updatedCoords = drawHilbertPixel(tiers.getLast().get(tierStep), x, y, outputImage, pixels, inputImage, totalErrors);
                 x = updatedCoords[0];
                 y = updatedCoords[1];
+
+                if (step % 7 == 0)
+                {
+                    totalErrors.clampColor();
+                }
+
                 // because we're progressing through multiple precalculated steps in this loop, we have to manually increment tierSteps
                 // otherwise they perpetually remain at 0
                 tierIndices.set((tierIndices.size() - 1) - tierIndex, tierStep + 1);
@@ -107,6 +113,7 @@ public class Ditherer
             tiers.removeLast();
             tierIndices.removeLast();
             rotationsPerTier.removeLast();
+
 
             tierIndex = 1;
             while (!tiers.isEmpty())
