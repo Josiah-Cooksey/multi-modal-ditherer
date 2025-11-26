@@ -81,24 +81,6 @@ public class BigColor
 
     public double getColorDistance(Color color)
     {
-        int redDistance = Math.abs(this.red - color.getRed());
-        int greenDistance = Math.abs(this.green - color.getGreen());
-        int blueDistance = Math.abs(this.blue - color.getBlue());
-
-        // double firstHypotenuse = Math.sqrt(Math.pow(redDistance, 2) + Math.pow(greenDistance, 2));
-        return Math.sqrt(Math.pow(redDistance, 2) + Math.pow(greenDistance, 2) + Math.pow(blueDistance, 2));
-    }
-
-    public Color getBoundedColor()
-    {
-        return new Color(Math.max(Math.min(this.red, 255), 0),  Math.max(Math.min(this.green, 255), 0), Math.max(Math.min(this.blue, 255), 0));
-    }
-
-    public void addError(BigColor totalErrors)
-    {
-        this.red += totalErrors.getRed();
-        this.green += totalErrors.getGreen();
-        this.blue += totalErrors.getBlue();
 
         // clamping for better dithering appearance
         if (this.red > 255)
@@ -125,5 +107,23 @@ public class BigColor
         {
             this.blue = 0;
         }
+        int redDistance = Math.abs(this.red - color.getRed());
+        int greenDistance = Math.abs(this.green - color.getGreen());
+        int blueDistance = Math.abs(this.blue - color.getBlue());
+
+        // double firstHypotenuse = Math.sqrt(Math.pow(redDistance, 2) + Math.pow(greenDistance, 2));
+        return Math.sqrt(Math.pow(redDistance, 2) + Math.pow(greenDistance, 2) + Math.pow(blueDistance, 2));
+    }
+
+    public Color getBoundedColor()
+    {
+        return new Color(Math.max(Math.min(this.red, 255), 0),  Math.max(Math.min(this.green, 255), 0), Math.max(Math.min(this.blue, 255), 0));
+    }
+
+    public void addError(BigColor totalErrors)
+    {
+        this.red += totalErrors.getRed();
+        this.green += totalErrors.getGreen();
+        this.blue += totalErrors.getBlue();
     }
 }
