@@ -52,6 +52,8 @@ public class Ditherer
 
                 totalErrors = targetColor;
                 totalErrors.removeColor(ditherColor);
+
+                totalErrors.clampColor();
             }
         }
 
