@@ -101,7 +101,7 @@ public class Ditherer
                 x = updatedCoords[0];
                 y = updatedCoords[1];
 
-                if (step % 7 == 0)
+                if (step % 31 == 0)
                 {
                     totalErrors.clampColor();
                 }
