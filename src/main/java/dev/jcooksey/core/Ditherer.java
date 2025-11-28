@@ -24,11 +24,15 @@ public class Ditherer
         palette = colors;
     }
 
-    public BufferedImage dither(Map<String, BufferedImage> images)
+    public BufferedImage dither(Map<String, BufferedImage> images, String pattern)
     {
         setPalette(images.get("palette"));
-
-        BufferedImage ditheredImage = simpleDither(images.get("inputImage"));
+        BufferedImage ditheredImage = switch (pattern)
+        {
+            case "hilbert" -> hilbertDither(images.get("inputImage"));
+            case "linear" -> simpleDither(images.get("inputImage"));
+            default -> hilbertDither(images.get("inputImage"));
+        };
 
         return ditheredImage;
     }
