@@ -18,7 +18,7 @@ import javax.imageio.ImageIO;
 
 public class DitherRequestHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent>
 {
-    final static int expectedImageCount = 3;
+    final static int expectedImageCount = 2;
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent event, Context context)
@@ -89,7 +89,18 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
         // formParser.reset();
 
         Ditherer ditherer = new Ditherer();
-        BufferedImage resultImage = ditherer.dither(formListener.getImages());
+
+        Map<String, String> fieldData = formListener.getFormFields();
+
+        if (!fieldData.containsKey("pattern"))
+        {
+            // the default pattern if none is provided
+            fieldData.put("pattern", "hilbert");
+        }
+
+        BufferedImage resultImage = ditherer.dither(formListener.getImages(), fieldData.get("pattern"));
+
+
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try
         {
@@ -152,18 +163,17 @@ public class DitherRequestHandler implements RequestHandler<APIGatewayProxyReque
     {
         if (images.size() != expectedImageCount)
         {
-            throw new FormValidationException("form did not contain the 3 expected images (inputImage, kernel, palette)");
+            throw new FormValidationException("form did not contain the 2 expected images (inputImage and palette)");
         }
         for (String key : images.keySet())
         {
             switch(key)
             {
                 case "inputImage":
-                case "kernel":
                 case "palette":
                     break;
                 default:
-                    throw new FormValidationException("form field names did not match expectations (inputImage, kernel, palette)");
+                    throw new FormValidationException("form field names did not match expectations (inputImage and palette)");
             }
         }
     }
