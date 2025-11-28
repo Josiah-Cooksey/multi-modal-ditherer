@@ -3,23 +3,21 @@ package dev.jcooksey.core;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
 
 public class Ditherer
 {
     private static final ArrayList<Integer> secondOrderRotations = new ArrayList<>(List.of(-1, 0, 0, 1));
 
-    public static ArrayList<Color> palette;
+    public static Set<Color> palette;
 
     public void setPalette(BufferedImage image)
     {
         palette = getImageColors(image);
     }
 
-    public void setPalette(ArrayList<Color> colors)
+    public void setPalette(Set<Color> colors)
     {
         palette = colors;
     }
@@ -27,6 +25,8 @@ public class Ditherer
     public BufferedImage dither(Map<String, BufferedImage> images, String pattern)
     {
         setPalette(images.get("palette"));
+        palette.add(Color.BLACK);
+        palette.add(Color.WHITE);
         BufferedImage ditheredImage = switch (pattern)
         {
             case "hilbert" -> hilbertDither(images.get("inputImage"));
@@ -291,19 +291,15 @@ public class Ditherer
         return (4 + (original_direction + rotation)) % 4;
     }
 
-    private ArrayList<Color> getImageColors(BufferedImage image)
+    private Set<Color> getImageColors(BufferedImage image)
     {
-        ArrayList<Color> colors = new ArrayList<>();
+        Set<Color> colors = new HashSet<>();
 
         for (int x = 0; x < image.getWidth(); x++)
         {
             for (int y = 0; y < image.getHeight(); y++)
             {
                 Color color = new Color(image.getRGB(x, y));
-                if (colors.contains(color))
-                {
-                    continue;
-                }
                 colors.add(color);
             }
         }

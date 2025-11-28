@@ -7,6 +7,8 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Main
 {
@@ -42,7 +44,7 @@ public class Main
         }
 
 
-        ArrayList<Color> paletteColors = new ArrayList<>();
+        Set<Color> paletteColors = new HashSet<>();
         paletteColors.add(Color.BLACK);
         paletteColors.add(Color.WHITE);
 
