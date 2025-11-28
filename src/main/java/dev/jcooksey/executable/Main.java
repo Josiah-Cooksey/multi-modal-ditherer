@@ -46,9 +46,9 @@ public class Main
         paletteColors.add(Color.BLACK);
         paletteColors.add(Color.WHITE);
 
+        paletteColors.add(getRandomColor());
+        paletteColors.add(getRandomColor());
         /*paletteColors.add(getRandomColor());
-        paletteColors.add(getRandomColor());
-        paletteColors.add(getRandomColor());
         paletteColors.add(getRandomColor());
         paletteColors.add(getRandomColor());
         paletteColors.add(getRandomColor());
@@ -57,10 +57,10 @@ public class Main
         paletteColors.add(getRandomColor());*/
         /*paletteColors.add(Color.CYAN);
         paletteColors.add(Color.MAGENTA);
-        paletteColors.add(Color.YELLOW);*/
+        paletteColors.add(Color.YELLOW);
         paletteColors.add(Color.RED);
         paletteColors.add(Color.GREEN);
-        paletteColors.add(Color.BLUE);
+        paletteColors.add(Color.BLUE);*/
         for (int i = 0; i < inputFiles.length; i++)
         {
             // for now, I'm only supporting PNG and JPEG images
